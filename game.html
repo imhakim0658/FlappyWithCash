@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flappy Coin Quest - Telegram Mini App</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Monetag SDK Placeholder (আপনার Zone ID অনুযায়ী কোডটি লাইভ করার সময় পরিবর্তন করবেন) -->
+  <script>
+    /* Monetag Ad Zone Script Hook */
+    window.monetagZoneId = "YOUR_ZONE_ID_HERE";
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Press+Start+2P&family=Outfit:wght@400;600;700;800&display=swap');
+
+    :root {
+      --primary: #f59e0b;
+      --accent: #10b981;
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+    }
+
+    body {
+      font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+    }
+
+    .pixel-font {
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #f59e0b;
+      border-radius: 4px;
+    }
+
+    /* Pulse Glow */
+    .glow-gold {
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    .glow-pink {
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between items-center overflow-x-hidden pb-16">
+
+  <!-- Top Navigation & Stats Bar -->
+  <header class="w-full max-w-md bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-3 sticky top-0 z-30 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div id="userAvatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center font-bold text-white shadow-md text-sm">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div>
+        <h2 id="userName" class="text-xs font-bold text-slate-200">টেলিগ্রাম গেমার</h2>
+        <span class="inline-flex items-center text-[10px] text-emerald-400 font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1"></span> অনলাইন
+        </span>
+      </div>
+    </div>
+
+    <!-- Live Coin & BDT Balance Badge -->
+    <div class="flex items-center space-x-2 bg-slate-800/90 px-3 py-1.5 rounded-full border border-amber-500/30">
+      <div class="flex items-center text-amber-400 text-xs font-bold">
+        <i class="fa-solid fa-coins mr-1 text-amber-400 animate-spin" style="animation-duration: 4s;"></i>
+        <span id="headerCoinBalance">0</span>
+      </div>
+      <span class="text-slate-500 text-xs">|</span>
+      <div class="text-[11px] font-bold text-emerald-400">
+        ৳<span id="headerBdtBalance">0.00</span>
+      </div>
+    </div>
+
+    <!-- Sound Toggle -->
+    <button id="btnSoundToggle" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-amber-400 transition">
+      <i id="soundIcon" class="fa-solid fa-volume-high text-xs"></i>
+    </button>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center p-2 relative">
+
+    <!-- TAB 1: GAME SCREEN -->
+    <div id="tabGame" class="w-full flex flex-col items-center justify-center relative">
+      <!-- Game Container with Canvas -->
+      <div class="relative w-full aspect-[9/14] max-h-[580px] bg-sky-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60">
+        <canvas id="gameCanvas" class="w-full h-full block cursor-pointer"></canvas>
+
+        <!-- Canvas HUD Overlay (Score during gameplay) -->
+        <div id="hudOverlay" class="absolute top-4 left-0 right-0 flex justify-between px-5 pointer-events-none z-10 transition-opacity">
+          <div class="bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 text-white font-bold text-sm">
+            স্কোর: <span id="currentScore" class="text-amber-400 text-base">0</span>
+          </div>
+          <div class="bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 text-amber-300 font-bold text-sm">
+            <i class="fa-solid fa-coins text-amber-400"></i> +<span id="sessionCoins">0</span>
+          </div>
+        </div>
+
+        <!-- Start Screen Overlay -->
+        <div id="startScreen" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20 transition-all">
+          <div class="w-20 h-20 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-2xl flex items-center justify-center text-3xl text-slate-900 shadow-xl mb-4 transform hover:scale-105 transition glow-gold">
+            <i class="fa-solid fa-dove animate-bounce"></i>
+          </div>
+          <h1 class="text-2xl font-black text-white tracking-wide mb-1">FLAPPY CASH</h1>
+          <p class="text-slate-300 text-xs mb-5 max-w-[240px]">ট্যাপ করে উড়ুন, অবস্টেকল বাঁচান ও কয়েন সংগ্রহ করে bKash-এ টাকা তুলুন!</p>
+
+          <button id="btnStartGame" class="w-48 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-play"></i>
+            <span>খেলা শুরু করুন</span>
+          </button>
+          
+          <div class="mt-4 flex items-center space-x-2 text-[11px] text-amber-400/80 bg-amber-500/10 px-3 py-1 rounded-full">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>অ্যান্টি-চিট সিকিউরিটি চালু আছে</span>
+          </div>
+        </div>
+
+        <!-- Game Over & Ad Revive Modal -->
+        <div id="gameOverModal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md hidden flex-col items-center justify-center p-5 z-25 text-center">
+          <div class="w-14 h-14 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-500 flex items-center justify-center text-2xl mb-2">
+            <i class="fa-solid fa-skull"></i>
+          </div>
+          <h2 class="text-xl font-black text-rose-400 mb-1">গেম ওভার!</h2>
+          <p class="text-xs text-slate-400 mb-3">আপনি পাইপে ধাক্কা খেয়েছেন</p>
+
+          <div class="w-full bg-slate-800/80 border border-slate-700/60 rounded-xl p-3.5 mb-4 flex justify-around">
+            <div>
+              <div class="text-[11px] text-slate-400">অর্জিত স্কোর</div>
+              <div id="finalScoreText" class="text-xl font-black text-white">0</div>
+            </div>
+            <div class="w-px bg-slate-700"></div>
+            <div>
+              <div class="text-[11px] text-slate-400">নতুন কয়েন</div>
+              <div id="finalCoinsText" class="text-xl font-black text-amber-400">+0</div>
+            </div>
+          </div>
+
+          <!-- Revive Option with Rewarded Ad -->
+          <button id="btnReviveAd" class="w-full py-3 mb-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-video text-amber-300"></i>
+            <span>অ্যাড দেখে রিভাইভ করুন (১ বার)</span>
+          </button>
+
+          <!-- 2x Reward with Ad -->
+          <button id="btnDoubleRewardAd" class="w-full py-2.5 mb-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-md transform active:scale-95 transition flex items-center justify-center space-x-2 text-xs">
+            <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i>
+            <span>অ্যাড দেখে কয়েন ২ গুণ করুন (2X)</span>
+          </button>
+
+          <!-- Claim & Restart -->
+          <button id="btnCollectAndRestart" class="w-full py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-check"></i>
+            <span>ব্যালেন্সে যোগ করে রিস্টার্ট করুন</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: WITHDRAW & WALLET SCREEN -->
+    <div id="tabWallet" class="w-full hidden flex-col items-center space-y-4">
+      <!-- Balance Card -->
+      <div class="w-full bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-5 rounded-2xl relative overflow-hidden shadow-xl">
+        <div class="absolute -right-4 -bottom-4 text-7xl text-slate-700/20 pointer-events-none">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <div class="text-xs font-semibold text-slate-400 mb-1">মোট আর্নিং ব্যালেন্স</div>
+        <div class="flex items-baseline space-x-2">
+          <h1 id="walletCoinAmount" class="text-3xl font-black text-amber-400">0</h1>
+          <span class="text-xs font-bold text-amber-500">কয়েন</span>
+        </div>
+        <div class="mt-2 text-sm text-emerald-400 font-bold flex items-center">
+          <i class="fa-solid fa-bangladeshi-taka-sign mr-1"></i>
+          <span id="walletBdtAmount">0.00</span> টাকা
+        </div>
+        <div class="mt-3 text-[11px] text-slate-400 bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+          💡 কনভার্শন রেট: <strong class="text-amber-400">১,০০০ কয়েন = ১.০০ টাকা</strong> | সর্বনিম্ন উইথড্র: <strong class="text-emerald-400">৫০ টাকা</strong>
+        </div>
+      </div>
+
+      <!-- bKash Cashout Form -->
+      <div class="w-full bg-slate-800/90 border border-slate-700/80 p-4 rounded-2xl shadow-lg">
+        <div class="flex items-center space-x-2.5 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-pink-600 flex items-center justify-center text-white font-bold text-sm">
+            b
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">bKash ইনস্ট্যান্ট ক্যাশআউট</h3>
+            <p class="text-[11px] text-slate-400">আপনার পার্সোনাল bKash নম্বর দিন</p>
+          </div>
+        </div>
+
+        <form id="withdrawForm" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">bKash একাউন্ট নম্বর (১১ ডিজিট)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 text-xs">
+                <i class="fa-solid fa-phone"></i>
+              </span>
+              <input type="tel" id="bkashNumber" placeholder="01XXXXXXXXX" maxlength="11" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:border-pink-500 transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">টাকার পরিমাণ (BDT)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 text-xs">
+                ৳
+              </span>
+              <input type="number" id="withdrawAmount" placeholder="৫০ বা তার বেশি" min="50" class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95 flex items-center justify-center space-x-1.5">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>উইথড্র রিকোয়েস্ট পাঠান</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Withdraw History -->
+      <div class="w-full bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl">
+        <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center justify-between">
+          <span>লেনদেন হিস্ট্রি</span>
+          <span class="text-[10px] text-slate-500">সর্বশেষ ৫টি</span>
+        </h4>
+        <div id="payoutHistoryList" class="space-y-2 max-h-36 overflow-y-auto text-[11px]">
+          <div class="text-center text-slate-500 py-3">এখনো কোনো উইথড্র রিকোয়েস্ট করেননি</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: TASKS & ADS SCREEN -->
+    <div id="tabTasks" class="w-full hidden flex-col items-center space-y-3">
+      <div class="w-full bg-slate-800/90 border border-slate-700 p-4 rounded-2xl">
+        <h3 class="text-sm font-bold text-white mb-1">বোনাস অ্যাড ও ডেইলি টাস্ক</h3>
+        <p class="text-[11px] text-slate-400 mb-3">সহজ টাস্ক কমপ্লিট করে অতিরিক্ত কয়েন জিতুন</p>
+
+        <!-- Direct Rewarded Ad Task -->
+        <div class="space-y-2.5">
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-9 h-9 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-base">
+                <i class="fa-solid fa-film"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-white">স্পনসর ভিডিও অ্যাড</h4>
+                <p class="text-[10px] text-amber-400 font-semibold">+২০০ কয়েন রিওয়ার্ড</p>
+              </div>
+            </div>
+            <button id="btnDirectWatchAd" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs transition active:scale-95">
+              দেখুন
+            </button>
+          </div>
+
+          <!-- Telegram Channel Join Task -->
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-9 h-9 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-400 flex items-center justify-center text-base">
+                <i class="fa-brands fa-telegram"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-white">অফিশিয়াল চ্যানেলে যুক্ত হোন</h4>
+                <p class="text-[10px] text-sky-400 font-semibold">+৫০০ কয়েন বোনাস</p>
+              </div>
+            </div>
+            <button id="btnJoinChannel" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg text-xs transition active:scale-95">
+              জয়েন
+            </button>
+          </div>
+
+          <!-- Referral Link Copy -->
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-user-plus text-emerald-400 text-sm"></i>
+                <h4 class="text-xs font-bold text-white">বন্ধু রেফার করুন</h4>
+              </div>
+              <span class="text-[10px] font-bold text-emerald-400">+১,০০০ কয়েন প্রতি বন্ধু</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <input id="refLinkInput" type="text" readonly value="https://t.me/your_bot?start=ref_12345" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300">
+              <button id="btnCopyRef" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shrink-0">
+                কপি
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Tab Navigation -->
+  <nav class="w-full max-w-md bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 z-30 flex justify-around py-2 px-3">
+    <button id="navBtnGame" class="flex flex-col items-center text-amber-400 font-bold text-[10px] space-y-1 transition">
+      <i class="fa-solid fa-gamepad text-base"></i>
+      <span>গেম</span>
+    </button>
+    <button id="navBtnWallet" class="flex flex-col items-center text-slate-400 hover:text-amber-400 font-semibold text-[10px] space-y-1 transition">
+      <i class="fa-solid fa-wallet text-base"></i>
+      <span>উইথড্র</span>
+    </button>
+    <button id="navBtnTasks" class="flex flex-col items-center text-slate-400 hover:text-amber-400 font-semibold text-[10px] space-y-1 transition">
+      <i class="fa-solid fa-gift text-base"></i>
+      <span>টাস্ক</span>
+    </button>
+  </nav>
+
+  <!-- Custom Alert / Toast Notification (No alert() used!) -->
+  <div id="customToast" class="fixed top-14 z-50 transform -translate-y-20 opacity-0 pointer-events-none transition-all duration-300 w-11/12 max-w-sm bg-slate-800 border border-slate-700 text-white p-3 rounded-xl shadow-2xl flex items-center space-x-2.5">
+    <div id="toastIconContainer" class="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs">
+      <i id="toastIcon" class="fa-solid fa-check"></i>
+    </div>
+    <span id="toastMessage" class="text-xs font-semibold text-slate-200">সফল হয়েছে</span>
+  </div>
+
+  <!-- Simulated Rewarded Ad Overlay (Works when live Monetag script is pending) -->
+  <div id="simulatedAdOverlay" class="fixed inset-0 bg-black/95 z-50 hidden flex-col items-center justify-center p-6 text-center">
+    <div class="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-2xl p-5 shadow-2xl flex flex-col items-center">
+      <div class="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-[10px] font-bold mb-3">
+        <i class="fa-solid fa-badge-ad"></i>
+        <span>Monetag Sponsored Ad</span>
+      </div>
+      <div class="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center text-amber-400 text-4xl mb-3 animate-pulse">
+        <i class="fa-solid fa-play"></i>
+      </div>
+      <h3 class="text-base font-bold text-white mb-1">ভিডিও বিজ্ঞাপন চলছে...</h3>
+      <p class="text-xs text-slate-400 mb-4">রিওয়ার্ড পেতে বিজ্ঞাপনটি শেষ হওয়া পর্যন্ত অপেক্ষা করুন</p>
+      
+      <!-- Countdown Circular/Text Indicator -->
+      <div class="w-12 h-12 rounded-full border-4 border-amber-500/30 border-t-amber-500 animate-spin flex items-center justify-center mb-3">
+      </div>
+      <div class="text-xs font-bold text-amber-400">
+        অপেক্ষা করুন: <span id="adCountdown">5</span> সেকেন্ড
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Engine -->
+  <script>
+    // User & Wallet State
+    const AppState = {
+      coins: parseInt(localStorage.getItem('flappy_coins') || '2500'), // Welcome bonus
+      soundEnabled: localStorage.getItem('flappy_sound') !== 'false',
+      tgUser: { id: 'demo_user', first_name: 'টেলিগ্রাম প্লেয়ার' },
+      reviveUsedInSession: false,
+      gameSessionStart: 0,
+      withdrawHistory: JSON.parse(localStorage.getItem('flappy_withdrawals') || '[]'),
+      activeTab: 'game',
+      // Anti-cheat verification token
+      sessionChecksum: ''
+    };
+
+    // Initialize Telegram WebApp
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.expand();
+      if (tg.initDataUnsafe?.user) {
+        AppState.tgUser = tg.initDataUnsafe.user;
+        document.getElementById('userName').textContent = AppState.tgUser.first_name || 'টেলিগ্রাম প্লেয়ার';
+        if (AppState.tgUser.photo_url) {
+          document.getElementById('userAvatar').innerHTML = `<img src="${AppState.tgUser.photo_url}" class="w-full h-full rounded-full object-cover">`;
+        }
+      }
+    }
+
+    // UI Helper: Toast notification (Replaces alert)
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('customToast');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+      const iconBox = document.getElementById('toastIconContainer');
+
+      toastMsg.textContent = message;
+      if (type === 'success') {
+        iconBox.className = 'w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs';
+        toastIcon.className = 'fa-solid fa-check';
+      } else {
+        iconBox.className = 'w-7 h-7 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 text-xs';
+        toastIcon.className = 'fa-solid fa-triangle-exclamation';
+      }
+
+      toast.classList.remove('opacity-0', '-translate-y-20', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-20', 'pointer-events-none');
+      }, 3000);
+    }
+
+    // Update balances on UI
+    function updateBalances() {
+      const bdt = (AppState.coins / 1000).toFixed(2);
+      document.getElementById('headerCoinBalance').textContent = AppState.coins.toLocaleString('en-US');
+      document.getElementById('headerBdtBalance').textContent = bdt;
+      document.getElementById('walletCoinAmount').textContent = AppState.coins.toLocaleString('en-US');
+      document.getElementById('walletBdtAmount').textContent = bdt;
+      localStorage.setItem('flappy_coins', AppState.coins.toString());
+    }
+
+    // Synthetic Audio Engine (No external sound files required)
+    const AudioEngine = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+      playJump() {
+        if (!AppState.soundEnabled) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(620, this.ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.12);
+        } catch (e) {}
+      },
+      playCoin() {
+        if (!AppState.soundEnabled) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(987.77, now); // B5
+          osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } catch (e) {}
+      },
+      playHit() {
+        if (!AppState.soundEnabled) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.2);
+          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.2);
+        } catch (e) {}
+      }
+    };
+
+    // Canvas & Game Physics Setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Dynamic High-DPI Resolution
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * (window.devicePixelRatio || 1);
+      canvas.height = rect.height * (window.devicePixelRatio || 1);
+      ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    const Game = {
+      active: false,
+      score: 0,
+      sessionCoins: 0,
+      gravity: 0.38,
+      speed: 2.2,
+      bird: {
+        x: 60,
+        y: 200,
+        vy: 0,
+        radius: 14,
+        jumpPower: -6.4,
+        rotation: 0
+      },
+      pipes: [],
+      coinsInWorld: [],
+      particles: [],
+      spawnTimer: 0,
+
+      reset(keepScore = false) {
+        const h = canvas.getBoundingClientRect().height;
+        this.bird.x = 60;
+        this.bird.y = h / 2;
+        this.bird.vy = 0;
+        this.bird.rotation = 0;
+        this.pipes = [];
+        this.coinsInWorld = [];
+        this.particles = [];
+        this.spawnTimer = 0;
+        if (!keepScore) {
+          this.score = 0;
+          this.sessionCoins = 0;
+          AppState.reviveUsedInSession = false;
+          AppState.gameSessionStart = Date.now();
+          AppState.sessionChecksum = 'token_' + Math.random().toString(36).substring(2, 9);
+        }
+        document.getElementById('currentScore').textContent = this.score;
+        document.getElementById('sessionCoins').textContent = this.sessionCoins;
+      },
+
+      jump() {
+        if (!this.active) return;
+        this.bird.vy = this.bird.jumpPower;
+        AudioEngine.playJump();
+        // Haptic feedback for Telegram
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+      },
+
+      update() {
+        if (!this.active) return;
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        // Bird Physics
+        this.bird.vy += this.gravity;
+        this.bird.y += this.bird.vy;
+        this.bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.bird.vy * 0.08)));
+
+        // Floor / Ceiling Collision
+        if (this.bird.y + this.bird.radius >= height - 25 || this.bird.y - this.bird.radius <= 0) {
+          this.gameOver();
+          return;
+        }
+
+        // Spawn Pipes & Floating Coins
+        this.spawnTimer++;
+        if (this.spawnTimer > 105) {
+          this.spawnTimer = 0;
+          const pipeGap = 125;
+          const minPipeH = 50;
+          const maxPipeH = height - pipeGap - minPipeH - 40;
+          const topH = Math.floor(Math.random() * (maxPipeH - minPipeH + 1)) + minPipeH;
+
+          this.pipes.push({
+            x: width,
+            topH: topH,
+            bottomY: topH + pipeGap,
+            bottomH: height - (topH + pipeGap) - 20,
+            width: 52,
+            passed: false
+          });
+
+          // Chance to spawn floating coin inside gap
+          if (Math.random() > 0.35) {
+            this.coinsInWorld.push({
+              x: width + 26,
+              y: topH + pipeGap / 2,
+              radius: 9,
+              collected: false
+            });
+          }
+        }
+
+        // Update Pipes
+        for (let i = this.pipes.length - 1; i >= 0; i--) {
+          const p = this.pipes[i];
+          p.x -= this.speed;
+
+          // Score check
+          if (!p.passed && p.x + p.width < this.bird.x) {
+            p.passed = true;
+            this.score++;
+            this.sessionCoins += 5; // 5 coins per pipe passed
+            document.getElementById('currentScore').textContent = this.score;
+            document.getElementById('sessionCoins').textContent = this.sessionCoins;
+            AudioEngine.playCoin();
+          }
+
+          // Collision Detection with Pipe
+          const bx = this.bird.x;
+          const by = this.bird.y;
+          const r = this.bird.radius - 2;
+
+          if (bx + r > p.x && bx - r < p.x + p.width) {
+            if (by - r < p.topH || by + r > p.bottomY) {
+              this.gameOver();
+              return;
+            }
+          }
+
+          // Remove out-of-screen pipes
+          if (p.x + p.width < -10) {
+            this.pipes.splice(i, 1);
+          }
+        }
+
+        // Update Coins
+        for (let i = this.coinsInWorld.length - 1; i >= 0; i--) {
+          const c = this.coinsInWorld[i];
+          c.x -= this.speed;
+
+          // Collect Coin
+          const dx = this.bird.x - c.x;
+          const dy = this.bird.y - c.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (!c.collected && dist < this.bird.radius + c.radius) {
+            c.collected = true;
+            this.sessionCoins += 20; // 20 bonus coins
+            document.getElementById('sessionCoins').textContent = this.sessionCoins;
+            AudioEngine.playCoin();
+            // Emit particles
+            for (let k = 0; k < 6; k++) {
+              this.particles.push({
+                x: c.x,
+                y: c.y,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                life: 25,
+                color: '#facc15'
+              });
+            }
+          }
+
+          if (c.x < -10 || c.collected) {
+            this.coinsInWorld.splice(i, 1);
+          }
+        }
+
+        // Particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const pt = this.particles[i];
+          pt.x += pt.vx;
+          pt.y += pt.vy;
+          pt.life--;
+          if (pt.life <= 0) this.particles.splice(i, 1);
+        }
+      },
+
+      render() {
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        // Background Sky
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+        skyGradient.addColorStop(0, '#0284c7');
+        skyGradient.addColorStop(0.7, '#38bdf8');
+        skyGradient.addColorStop(1, '#bae6fd');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        // Ground Strip
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(0, height - 25, width, 8);
+        ctx.fillStyle = '#854d0e';
+        ctx.fillRect(0, height - 17, width, 17);
+
+        // Render Pipes
+        for (const p of this.pipes) {
+          ctx.fillStyle = '#22c55e';
+          // Top Pipe
+          ctx.fillRect(p.x, 0, p.width, p.topH);
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(p.x - 3, p.topH - 16, p.width + 6, 16);
+
+          // Bottom Pipe
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(p.x, p.bottomY, p.width, p.bottomH);
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(p.x - 3, p.bottomY, p.width + 6, 16);
+        }
+
+        // Render Coins
+        for (const c of this.coinsInWorld) {
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#eab308';
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#fef08a';
+          ctx.stroke();
+          // Inner icon
+          ctx.fillStyle = '#713f12';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('৳', c.x, c.y);
+        }
+
+        // Render Particles
+        for (const pt of this.particles) {
+          ctx.fillStyle = pt.color;
+          ctx.fillRect(pt.x, pt.y, 3, 3);
+        }
+
+        // Render Bird
+        ctx.save();
+        ctx.translate(this.bird.x, this.bird.y);
+        ctx.rotate(this.bird.rotation);
+
+        // Bird Body
+        ctx.beginPath();
+        ctx.arc(0, 0, this.bird.radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#b45309';
+        ctx.stroke();
+
+        // Eye
+        ctx.beginPath();
+        ctx.arc(6, -4, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(8, -4, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+
+        // Beak
+        ctx.beginPath();
+        ctx.moveTo(10, 0);
+        ctx.lineTo(20, 3);
+        ctx.lineTo(10, 7);
+        ctx.fillStyle = '#f97316';
+        ctx.fill();
+
+        // Wing
+        ctx.beginPath();
+        ctx.ellipse(-5, 3, 7, 4, -0.2, 0, Math.PI * 2);
+        ctx.fillStyle = '#fde68a';
+        ctx.fill();
+
+        ctx.restore();
+      },
+
+      gameOver() {
+        this.active = false;
+        AudioEngine.playHit();
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+        }
+
+        // Anti-Cheat: Validate time elapsed vs score
+        const timeSpentSeconds = (Date.now() - AppState.gameSessionStart) / 1000;
+        const maxPossibleScore = Math.floor(timeSpentSeconds * 1.5) + 5;
+        if (this.score > maxPossibleScore && this.score > 20) {
+          showToast('সন্দেহজনক কার্যকলাপ ধরা পড়েছে! কয়েন বাতিল।', 'error');
+          this.sessionCoins = 0;
+        }
+
+        document.getElementById('finalScoreText').textContent = this.score;
+        document.getElementById('finalCoinsText').textContent = `+${this.sessionCoins}`;
+
+        // Disable revive button if already used
+        const reviveBtn = document.getElementById('btnReviveAd');
+        if (AppState.reviveUsedInSession) {
+          reviveBtn.classList.add('opacity-50', 'pointer-events-none');
+          reviveBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span>রিভাইভ লিমিট শেষ</span>';
+        } else {
+          reviveBtn.classList.remove('opacity-50', 'pointer-events-none');
+          reviveBtn.innerHTML = '<i class="fa-solid fa-video text-amber-300"></i> <span>অ্যাড দেখে রিভাইভ করুন (১ বার)</span>';
+        }
+
+        document.getElementById('gameOverModal').classList.remove('hidden');
+        document.getElementById('gameOverModal').classList.add('flex');
+      }
+    };
+
+    // Game Loop
+    function gameLoop() {
+      Game.update();
+      Game.render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Input handlers
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      Game.jump();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        Game.jump();
+      }
+    });
+
+    // Start Button
+    document.getElementById('btnStartGame').addEventListener('click', () => {
+      AudioEngine.init();
+      resizeCanvas();
+      document.getElementById('startScreen').classList.add('hidden');
+      Game.reset();
+      Game.active = true;
+    });
+
+    // Monetag Rewarded Ad Handler with Fallback Simulator
+    function triggerMonetagAd(rewardType, callback) {
+      // Check if official Monetag Web function exists (e.g., show_XXXXXXX)
+      const officialAdFunction = window[`show_${window.monetagZoneId}`];
+
+      if (typeof officialAdFunction === 'function') {
+        // Real Monetag Rewarded Ad Trigger
+        officialAdFunction()
+          .then(() => {
+            callback(true);
+          })
+          .catch((err) => {
+            showToast('অ্যাড লোড হতে সমস্যা হয়েছে, পরে চেষ্টা করুন', 'error');
+            callback(false);
+          });
+      } else {
+        // Simulated Rewarded Ad Experience (Zero Broken States in Preview)
+        const adModal = document.getElementById('simulatedAdOverlay');
+        const countdownEl = document.getElementById('adCountdown');
+        let timeLeft = 5;
+
+        adModal.classList.remove('hidden');
+        adModal.classList.add('flex');
+        countdownEl.textContent = timeLeft;
+
+        const timer = setInterval(() => {
+          timeLeft--;
+          countdownEl.textContent = timeLeft;
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            adModal.classList.remove('flex');
+            adModal.classList.add('hidden');
+            callback(true);
+          }
+        }, 1000);
+      }
+    }
+
+    // Revive Action
+    document.getElementById('btnReviveAd').addEventListener('click', () => {
+      triggerMonetagAd('revive', (success) => {
+        if (success) {
+          AppState.reviveUsedInSession = true;
+          document.getElementById('gameOverModal').classList.remove('flex');
+          document.getElementById('gameOverModal').classList.add('hidden');
+          // Revive player by clearing nearby pipes
+          Game.bird.y = canvas.getBoundingClientRect().height / 2;
+          Game.bird.vy = 0;
+          Game.pipes = Game.pipes.filter(p => p.x > Game.bird.x + 120);
+          Game.active = true;
+          showToast('রিভাইভ সফল হয়েছে! খেলা চালু হলো।', 'success');
+        }
+      });
+    });
+
+    // 2x Reward Action
+    document.getElementById('btnDoubleRewardAd').addEventListener('click', () => {
+      triggerMonetagAd('double', (success) => {
+        if (success) {
+          Game.sessionCoins = Game.sessionCoins * 2;
+          document.getElementById('finalCoinsText').textContent = `+${Game.sessionCoins} (2X)`;
+          document.getElementById('btnDoubleRewardAd').classList.add('opacity-50', 'pointer-events-none');
+          showToast('অভিনন্দন! আপনার কয়েন দ্বিগুণ (2X) হয়েছে!', 'success');
+        }
+      });
+    });
+
+    // Claim and Restart
+    document.getElementById('btnCollectAndRestart').addEventListener('click', () => {
+      AppState.coins += Game.sessionCoins;
+      updateBalances();
+      document.getElementById('gameOverModal').classList.remove('flex');
+      document.getElementById('gameOverModal').classList.add('hidden');
+      Game.reset();
+      Game.active = true;
+      showToast(`${Game.sessionCoins} কয়েন ব্যালেন্সে যোগ হয়েছে!`, 'success');
+    });
+
+    // Direct Ad in Tasks Tab
+    document.getElementById('btnDirectWatchAd').addEventListener('click', () => {
+      triggerMonetagAd('task', (success) => {
+        if (success) {
+          AppState.coins += 200;
+          updateBalances();
+          showToast('বোনাস ২০০ কয়েন যোগ হয়েছে!', 'success');
+        }
+      });
+    });
+
+    // Telegram Channel Join Simulator
+    document.getElementById('btnJoinChannel').addEventListener('click', () => {
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.openTelegramLink('https://t.me/telegram');
+      } else {
+        window.open('https://t.me/telegram', '_blank');
+      }
+      setTimeout(() => {
+        AppState.coins += 500;
+        updateBalances();
+        showToast('চ্যানেল বোনাস ৫০০ কয়েন পাওয়া গেছে!', 'success');
+        document.getElementById('btnJoinChannel').textContent = 'সম্পন্ন';
+        document.getElementById('btnJoinChannel').classList.add('bg-slate-700', 'pointer-events-none');
+      }, 3000);
+    });
+
+    // Copy Referral Link
+    document.getElementById('btnCopyRef').addEventListener('click', () => {
+      const input = document.getElementById('refLinkInput');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        showToast('রেফারেল লিঙ্ক কপি করা হয়েছে!', 'success');
+      } catch (err) {
+        showToast('কপি ব্যর্থ হয়েছে', 'error');
+      }
+    });
+
+    // bKash Withdrawal Processing
+    const withdrawForm = document.getElementById('withdrawForm');
+    const payoutHistoryList = document.getElementById('payoutHistoryList');
+
+    function renderHistory() {
+      if (AppState.withdrawHistory.length === 0) {
+        payoutHistoryList.innerHTML = `<div class="text-center text-slate-500 py-3">এখনো কোনো উইথড্র রিকোয়েস্ট করেননি</div>`;
+        return;
+      }
+
+      payoutHistoryList.innerHTML = AppState.withdrawHistory.map(item => `
+        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 flex items-center justify-between">
+          <div>
+            <div class="font-bold text-white flex items-center space-x-1">
+              <span>৳${item.amount}</span>
+              <span class="text-[10px] text-pink-400 font-normal">(${item.phone})</span>
+            </div>
+            <div class="text-[9px] text-slate-500">${item.date}</div>
+          </div>
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${
+            item.status === 'পেন্ডিং' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+          }">
+            ${item.status}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    withdrawForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const phone = document.getElementById('bkashNumber').value.trim();
+      const amount = parseFloat(document.getElementById('withdrawAmount').value);
+
+      // Validation
+      const bdPhoneRegex = /^01[3-9]\d{8}$/;
+      if (!bdPhoneRegex.test(phone)) {
+        showToast('সঠিক ১১ ডিজিটের bKash নম্বর দিন (যেমন: 01712345678)', 'error');
+        return;
+      }
+
+      if (isNaN(amount) || amount < 50) {
+        showToast('সর্বনিম্ন উইথড্রয়াল ৫০ টাকা!', 'error');
+        return;
+      }
+
+      const requiredCoins = amount * 1000;
+      if (AppState.coins < requiredCoins) {
+        showToast(`পর্যাপ্ত ব্যালেন্স নেই! প্রয়োজন ${requiredCoins.toLocaleString()} কয়েন।`, 'error');
+        return;
+      }
+
+      // Process Withdrawal
+      AppState.coins -= requiredCoins;
+      updateBalances();
+
+      const newRecord = {
+        id: Date.now(),
+        phone: phone,
+        amount: amount,
+        date: new Date().toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        status: 'পেন্ডিং'
+      };
+
+      AppState.withdrawHistory.unshift(newRecord);
+      if (AppState.withdrawHistory.length > 5) AppState.withdrawHistory.pop();
+      localStorage.setItem('flappy_withdrawals', JSON.stringify(AppState.withdrawHistory));
+
+      renderHistory();
+      document.getElementById('bkashNumber').value = '';
+      document.getElementById('withdrawAmount').value = '';
+
+      showToast(`৳${amount} উইথড্র রিকোয়েস্ট অ্যাডমিনের কাছে পাঠানো হয়েছে!`, 'success');
+    });
+
+    // Tab Navigation
+    const navBtnGame = document.getElementById('navBtnGame');
+    const navBtnWallet = document.getElementById('navBtnWallet');
+    const navBtnTasks = document.getElementById('navBtnTasks');
+
+    const tabGame = document.getElementById('tabGame');
+    const tabWallet = document.getElementById('tabWallet');
+    const tabTasks = document.getElementById('tabTasks');
+
+    function switchTab(tab) {
+      [tabGame, tabWallet, tabTasks].forEach(t => t.classList.add('hidden'));
+      [navBtnGame, navBtnWallet, navBtnTasks].forEach(b => {
+        b.classList.remove('text-amber-400');
+        b.classList.add('text-slate-400');
+      });
+
+      if (tab === 'game') {
+        tabGame.classList.remove('hidden');
+        navBtnGame.classList.add('text-amber-400');
+        navBtnGame.classList.remove('text-slate-400');
+        resizeCanvas();
+      } else if (tab === 'wallet') {
+        tabWallet.classList.remove('hidden');
+        navBtnWallet.classList.add('text-amber-400');
+        navBtnWallet.classList.remove('text-slate-400');
+        renderHistory();
+      } else if (tab === 'tasks') {
+        tabTasks.classList.remove('hidden');
+        navBtnTasks.classList.add('text-amber-400');
+        navBtnTasks.classList.remove('text-slate-400');
+      }
+    }
+
+    navBtnGame.addEventListener('click', () => switchTab('game'));
+    navBtnWallet.addEventListener('click', () => switchTab('wallet'));
+    navBtnTasks.addEventListener('click', () => switchTab('tasks'));
+
+    // Sound toggle
+    const btnSound = document.getElementById('btnSoundToggle');
+    const soundIcon = document.getElementById('soundIcon');
+    btnSound.addEventListener('click', () => {
+      AppState.soundEnabled = !AppState.soundEnabled;
+      localStorage.setItem('flappy_sound', AppState.soundEnabled);
+      if (AppState.soundEnabled) {
+        soundIcon.className = 'fa-solid fa-volume-high text-xs';
+        showToast('সাউন্ড চালু করা হয়েছে');
+      } else {
+        soundIcon.className = 'fa-solid fa-volume-xmark text-xs text-rose-400';
+        showToast('সাউন্ড মিউট করা হয়েছে');
+      }
+    });
+
+    // Window Init
+    window.onload = function() {
+      resizeCanvas();
+      updateBalances();
+      renderHistory();
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>
