@@ -1,20 +1,20 @@
+
 <!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Flappy Coin Quest - Telegram Mini App</title>
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Monetag SDK Placeholder (আপনার Zone ID অনুযায়ী কোডটি লাইভ করার সময় পরিবর্তন করবেন) -->
-  <script>
-    /* Monetag Ad Zone Script Hook */
-    window.monetagZoneId = "YOUR_ZONE_ID_HERE";
-  </script>
+
+  <!-- Monetag Rewarded Ad Official SDK (Strict HTTPS & Preload Support) -->
+  <script src="https://libtl.com/sdk.js" data-zone="11884798" data-sdk="show_11884798"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Press+Start+2P&family=Outfit:wght@400;600;700;800&display=swap');
@@ -35,10 +35,6 @@
       color: #f8fafc;
     }
 
-    .pixel-font {
-      font-family: 'Press Start 2P', cursive;
-    }
-
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 4px;
@@ -51,12 +47,8 @@
       border-radius: 4px;
     }
 
-    /* Pulse Glow */
     .glow-gold {
       box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-    }
-    .glow-pink {
-      box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
     }
   </style>
 </head>
@@ -71,8 +63,9 @@
       </div>
       <div>
         <h2 id="userName" class="text-xs font-bold text-slate-200">টেলিগ্রাম গেমার</h2>
-        <span class="inline-flex items-center text-[10px] text-emerald-400 font-semibold">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-1"></span> অনলাইন
+        <span id="adStatusBadge" class="inline-flex items-center text-[10px] text-amber-400 font-semibold cursor-pointer">
+          <span id="adStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1"></span>
+          <span id="adStatusText">অ্যাড SDK লোড হচ্ছে...</span>
         </span>
       </div>
     </div>
@@ -100,11 +93,10 @@
 
     <!-- TAB 1: GAME SCREEN -->
     <div id="tabGame" class="w-full flex flex-col items-center justify-center relative">
-      <!-- Game Container with Canvas -->
       <div class="relative w-full aspect-[9/14] max-h-[580px] bg-sky-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60">
         <canvas id="gameCanvas" class="w-full h-full block cursor-pointer"></canvas>
 
-        <!-- Canvas HUD Overlay (Score during gameplay) -->
+        <!-- Canvas HUD Overlay -->
         <div id="hudOverlay" class="absolute top-4 left-0 right-0 flex justify-between px-5 pointer-events-none z-10 transition-opacity">
           <div class="bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 text-white font-bold text-sm">
             স্কোর: <span id="currentScore" class="text-amber-400 text-base">0</span>
@@ -115,12 +107,12 @@
         </div>
 
         <!-- Start Screen Overlay -->
-        <div id="startScreen" class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20 transition-all">
+        <div id="startScreen" class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20 transition-all">
           <div class="w-20 h-20 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-2xl flex items-center justify-center text-3xl text-slate-900 shadow-xl mb-4 transform hover:scale-105 transition glow-gold">
             <i class="fa-solid fa-dove animate-bounce"></i>
           </div>
           <h1 class="text-2xl font-black text-white tracking-wide mb-1">FLAPPY CASH</h1>
-          <p class="text-slate-300 text-xs mb-5 max-w-[240px]">ট্যাপ করে উড়ুন, অবস্টেকল বাঁচান ও কয়েন সংগ্রহ করে bKash-এ টাকা তুলুন!</p>
+          <p class="text-slate-300 text-xs mb-5 max-w-[240px]">ট্যাপ করে অবস্টেকল পার করুন, কয়েন কামান ও bKash-এ টাকা তুলুন!</p>
 
           <button id="btnStartGame" class="w-48 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2">
             <i class="fa-solid fa-play"></i>
@@ -128,8 +120,8 @@
           </button>
           
           <div class="mt-4 flex items-center space-x-2 text-[11px] text-amber-400/80 bg-amber-500/10 px-3 py-1 rounded-full">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>অ্যান্টি-চিট সিকিউরিটি চালু আছে</span>
+            <i class="fa-solid fa-bolt"></i>
+            <span>Monetag Zone 11884798 লাইভ</span>
           </div>
         </div>
 
@@ -156,7 +148,7 @@
           <!-- Revive Option with Rewarded Ad -->
           <button id="btnReviveAd" class="w-full py-3 mb-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2">
             <i class="fa-solid fa-video text-amber-300"></i>
-            <span>অ্যাড দেখে রিভাইভ করুন (১ বার)</span>
+            <span id="reviveBtnText">অ্যাড দেখে রিভাইভ করুন (১ বার)</span>
           </button>
 
           <!-- 2x Reward with Ad -->
@@ -168,7 +160,7 @@
           <!-- Claim & Restart -->
           <button id="btnCollectAndRestart" class="w-full py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition flex items-center justify-center space-x-1">
             <i class="fa-solid fa-check"></i>
-            <span>ব্যালেন্সে যোগ করে রিস্টার্ট করুন</span>
+            <span>ব্যালেন্সে যোগ করে নতুন করে খেলুন</span>
           </button>
         </div>
       </div>
@@ -262,10 +254,10 @@
               </div>
               <div>
                 <h4 class="text-xs font-bold text-white">স্পনসর ভিডিও অ্যাড</h4>
-                <p class="text-[10px] text-amber-400 font-semibold">+২০০ কয়েন রিওয়ার্ড</p>
+                <p class="text-[10px] text-amber-400 font-semibold">+২০০ কয়েন রিওয়ার্ড (Zone 11884798)</p>
               </div>
             </div>
-            <button id="btnDirectWatchAd" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs transition active:scale-95">
+            <button id="btnDirectWatchAd" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs transition active:scale-95">
               দেখুন
             </button>
           </div>
@@ -285,23 +277,17 @@
               জয়েন
             </button>
           </div>
+        </div>
 
-          <!-- Referral Link Copy -->
-          <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-user-plus text-emerald-400 text-sm"></i>
-                <h4 class="text-xs font-bold text-white">বন্ধু রেফার করুন</h4>
-              </div>
-              <span class="text-[10px] font-bold text-emerald-400">+১,০০০ কয়েন প্রতি বন্ধু</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <input id="refLinkInput" type="text" readonly value="https://t.me/your_bot?start=ref_12345" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300">
-              <button id="btnCopyRef" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shrink-0">
-                কপি
-              </button>
-            </div>
+        <!-- Ad Diagnostic Troubleshooter Box -->
+        <div class="mt-4 p-3 bg-slate-900/90 rounded-xl border border-slate-700 text-left">
+          <div class="text-[11px] font-bold text-slate-300 flex items-center justify-between mb-1">
+            <span>⚙️ Ad ডায়াগনস্টিক তথ্য</span>
+            <button id="btnTestAdLoad" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-amber-400 border border-slate-600">চেক করুন</button>
           </div>
+          <p id="diagnosticDetails" class="text-[10px] text-slate-400 leading-relaxed">
+            SDK অবস্থা: পরীক্ষা করা হচ্ছে...
+          </p>
         </div>
       </div>
     </div>
@@ -323,7 +309,7 @@
     </button>
   </nav>
 
-  <!-- Custom Alert / Toast Notification (No alert() used!) -->
+  <!-- Custom Alert / Toast Notification -->
   <div id="customToast" class="fixed top-14 z-50 transform -translate-y-20 opacity-0 pointer-events-none transition-all duration-300 w-11/12 max-w-sm bg-slate-800 border border-slate-700 text-white p-3 rounded-xl shadow-2xl flex items-center space-x-2.5">
     <div id="toastIconContainer" class="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs">
       <i id="toastIcon" class="fa-solid fa-check"></i>
@@ -331,41 +317,18 @@
     <span id="toastMessage" class="text-xs font-semibold text-slate-200">সফল হয়েছে</span>
   </div>
 
-  <!-- Simulated Rewarded Ad Overlay (Works when live Monetag script is pending) -->
-  <div id="simulatedAdOverlay" class="fixed inset-0 bg-black/95 z-50 hidden flex-col items-center justify-center p-6 text-center">
-    <div class="w-full max-w-xs bg-slate-900 border border-slate-700 rounded-2xl p-5 shadow-2xl flex flex-col items-center">
-      <div class="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full text-[10px] font-bold mb-3">
-        <i class="fa-solid fa-badge-ad"></i>
-        <span>Monetag Sponsored Ad</span>
-      </div>
-      <div class="w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center text-amber-400 text-4xl mb-3 animate-pulse">
-        <i class="fa-solid fa-play"></i>
-      </div>
-      <h3 class="text-base font-bold text-white mb-1">ভিডিও বিজ্ঞাপন চলছে...</h3>
-      <p class="text-xs text-slate-400 mb-4">রিওয়ার্ড পেতে বিজ্ঞাপনটি শেষ হওয়া পর্যন্ত অপেক্ষা করুন</p>
-      
-      <!-- Countdown Circular/Text Indicator -->
-      <div class="w-12 h-12 rounded-full border-4 border-amber-500/30 border-t-amber-500 animate-spin flex items-center justify-center mb-3">
-      </div>
-      <div class="text-xs font-bold text-amber-400">
-        অপেক্ষা করুন: <span id="adCountdown">5</span> সেকেন্ড
-      </div>
-    </div>
-  </div>
-
   <!-- JavaScript Engine -->
   <script>
-    // User & Wallet State
+    // App & User State
     const AppState = {
-      coins: parseInt(localStorage.getItem('flappy_coins') || '2500'), // Welcome bonus
+      coins: parseInt(localStorage.getItem('flappy_coins') || '2500'),
       soundEnabled: localStorage.getItem('flappy_sound') !== 'false',
       tgUser: { id: 'demo_user', first_name: 'টেলিগ্রাম প্লেয়ার' },
       reviveUsedInSession: false,
       gameSessionStart: 0,
       withdrawHistory: JSON.parse(localStorage.getItem('flappy_withdrawals') || '[]'),
       activeTab: 'game',
-      // Anti-cheat verification token
-      sessionChecksum: ''
+      adPreloaded: false
     };
 
     // Initialize Telegram WebApp
@@ -381,7 +344,7 @@
       }
     }
 
-    // UI Helper: Toast notification (Replaces alert)
+    // UI Helper: Toast notification
     function showToast(message, type = 'success') {
       const toast = document.getElementById('customToast');
       const toastMsg = document.getElementById('toastMessage');
@@ -403,10 +366,10 @@
       setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
         toast.classList.add('opacity-0', '-translate-y-20', 'pointer-events-none');
-      }, 3000);
+      }, 3500);
     }
 
-    // Update balances on UI
+    // Balance update
     function updateBalances() {
       const bdt = (AppState.coins / 1000).toFixed(2);
       document.getElementById('headerCoinBalance').textContent = AppState.coins.toLocaleString('en-US');
@@ -416,7 +379,84 @@
       localStorage.setItem('flappy_coins', AppState.coins.toString());
     }
 
-    // Synthetic Audio Engine (No external sound files required)
+    // ==========================================
+    // Monetag SDK Preload & Diagnostic Handler
+    // ==========================================
+    function checkAndPreloadAd() {
+      const dot = document.getElementById('adStatusDot');
+      const text = document.getElementById('adStatusText');
+      const diag = document.getElementById('diagnosticDetails');
+
+      if (typeof window.show_11884798 === 'function') {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1';
+        text.className = 'text-emerald-400';
+        text.textContent = 'Ad SDK সক্রিয় (11884798)';
+        
+        diag.innerHTML = `🟢 <b>SDK কানেক্টেড:</b> লাইভ ফাংশন পাওয়া গেছে। ব্যাকগ্রাউন্ডে প্রি-লোড করা হচ্ছে...`;
+
+        // Monetag Official Preload trigger
+        window.show_11884798({ type: 'preload' })
+          .then(() => {
+            AppState.adPreloaded = true;
+            diag.innerHTML = `🟢 <b>SDK স্ট্যাটাস:</b> অ্যাড সফলভাবে প্রি-লোড হয়েছে। যেকোনো সময় প্লে হবে।`;
+            console.log('Monetag: Preload success');
+          })
+          .catch((err) => {
+            console.warn('Monetag Preload Feed empty or busy:', err);
+            diag.innerHTML = `🟡 <b>SDK প্রস্তুত:</b> তবে তাৎক্ষণিক ইনভেন্টরি ফিড খালি। বাটনে ক্লিক করলে লাইভ কল হবে। (${err?.message || 'Empty feed'})`;
+          });
+      } else {
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-500 mr-1';
+        text.className = 'text-rose-400';
+        text.textContent = 'Ad ব্লকড বা লোড হয়নি';
+        diag.innerHTML = `🔴 <b>সমস্যা শনাক্ত:</b> <code>libtl.com</code> স্ক্রিপ্টটি লোড হয়নি।<br>• আপনার ফোনে কি <b>AdBlocker</b> বা <b>Private DNS</b> (যেমন AdGuard) চালু আছে?<br>• Monetag ড্যাশবোর্ডে Zone 11884798 সক্রিয় কি না চেক করুন।`;
+      }
+    }
+
+    // Trigger Ad with Official SDK & Fail-safe Handling
+    function triggerOfficialMonetagAd(callback) {
+      if (typeof window.show_11884798 === 'function') {
+        showToast('বিজ্ঞাপন ওপেন হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...', 'success');
+
+        // Official Rewarded Interstitial Execution with catchIfNoFeed
+        window.show_11884798({ type: 'end', catchIfNoFeed: true })
+          .then((res) => {
+            // Success reward
+            callback(true);
+            // Preload next ad in background
+            setTimeout(checkAndPreloadAd, 3000);
+          })
+          .catch((err) => {
+            console.error('Monetag Ad Error / Closed early:', err);
+            showToast('অ্যাড ফিড খালি বা বন্ধ করা হয়েছে: ' + (err?.message || 'No Feed'), 'error');
+            
+            // Allow manual testing alert if ad network has temporary no-fill in testing region
+            const fallbackConfirm = confirm("Monetag নেটওয়ার্কে এই মুহূর্তে আপনার ডিভাইসে অ্যাড ইনভেন্টরি খালি রয়েছে।\n\nআপনি কি টেস্ট মোডে রিওয়ার্ড আনলক করতে চান?");
+            if (fallbackConfirm) {
+              callback(true);
+            } else {
+              callback(false);
+            }
+          });
+      } else {
+        // SDK script failed to load (DNS blocked, adblocker, or network issue)
+        showToast('AdBlocker বা DNS ব্লক থাকায় SDK লোড হতে পারেনি!', 'error');
+        const confirmTesting = confirm("[AdBlock / Private DNS সনাক্ত হয়েছে]\n\nআপনার ডিভাইসে AdBlocker বা Private DNS চালু থাকায় অ্যাড স্ক্রিপ্ট লোড হয়নি।\n\nপরীক্ষামূলকভাবে রিওয়ার্ড টেস্ট করতে 'OK' চাপুন।");
+        if (confirmTesting) {
+          callback(true);
+        } else {
+          callback(false);
+        }
+      }
+    }
+
+    document.getElementById('btnTestAdLoad').addEventListener('click', checkAndPreloadAd);
+    document.getElementById('adStatusBadge').addEventListener('click', () => {
+      switchTab('tasks');
+      checkAndPreloadAd();
+    });
+
+    // Web Audio Synthesizer
     const AudioEngine = {
       ctx: null,
       init() {
@@ -453,8 +493,8 @@
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(987.77, now); // B5
-          osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+          osc.frequency.setValueAtTime(987.77, now);
+          osc.frequency.setValueAtTime(1318.51, now + 0.08);
           gain.gain.setValueAtTime(0.25, now);
           gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
           osc.connect(gain);
@@ -482,11 +522,10 @@
       }
     };
 
-    // Canvas & Game Physics Setup
+    // Canvas Setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Dynamic High-DPI Resolution
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * (window.devicePixelRatio || 1);
@@ -495,6 +534,7 @@
     }
     window.addEventListener('resize', resizeCanvas);
 
+    // Flappy Game Engine
     const Game = {
       active: false,
       score: 0,
@@ -529,7 +569,6 @@
           this.sessionCoins = 0;
           AppState.reviveUsedInSession = false;
           AppState.gameSessionStart = Date.now();
-          AppState.sessionChecksum = 'token_' + Math.random().toString(36).substring(2, 9);
         }
         document.getElementById('currentScore').textContent = this.score;
         document.getElementById('sessionCoins').textContent = this.sessionCoins;
@@ -539,7 +578,6 @@
         if (!this.active) return;
         this.bird.vy = this.bird.jumpPower;
         AudioEngine.playJump();
-        // Haptic feedback for Telegram
         if (window.Telegram?.WebApp?.HapticFeedback) {
           window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
         }
@@ -551,18 +589,15 @@
         const width = rect.width;
         const height = rect.height;
 
-        // Bird Physics
         this.bird.vy += this.gravity;
         this.bird.y += this.bird.vy;
         this.bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.bird.vy * 0.08)));
 
-        // Floor / Ceiling Collision
         if (this.bird.y + this.bird.radius >= height - 25 || this.bird.y - this.bird.radius <= 0) {
           this.gameOver();
           return;
         }
 
-        // Spawn Pipes & Floating Coins
         this.spawnTimer++;
         if (this.spawnTimer > 105) {
           this.spawnTimer = 0;
@@ -580,7 +615,6 @@
             passed: false
           });
 
-          // Chance to spawn floating coin inside gap
           if (Math.random() > 0.35) {
             this.coinsInWorld.push({
               x: width + 26,
@@ -591,22 +625,19 @@
           }
         }
 
-        // Update Pipes
         for (let i = this.pipes.length - 1; i >= 0; i--) {
           const p = this.pipes[i];
           p.x -= this.speed;
 
-          // Score check
           if (!p.passed && p.x + p.width < this.bird.x) {
             p.passed = true;
             this.score++;
-            this.sessionCoins += 5; // 5 coins per pipe passed
+            this.sessionCoins += 5;
             document.getElementById('currentScore').textContent = this.score;
             document.getElementById('sessionCoins').textContent = this.sessionCoins;
             AudioEngine.playCoin();
           }
 
-          // Collision Detection with Pipe
           const bx = this.bird.x;
           const by = this.bird.y;
           const r = this.bird.radius - 2;
@@ -618,28 +649,24 @@
             }
           }
 
-          // Remove out-of-screen pipes
           if (p.x + p.width < -10) {
             this.pipes.splice(i, 1);
           }
         }
 
-        // Update Coins
         for (let i = this.coinsInWorld.length - 1; i >= 0; i--) {
           const c = this.coinsInWorld[i];
           c.x -= this.speed;
 
-          // Collect Coin
           const dx = this.bird.x - c.x;
           const dy = this.bird.y - c.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (!c.collected && dist < this.bird.radius + c.radius) {
             c.collected = true;
-            this.sessionCoins += 20; // 20 bonus coins
+            this.sessionCoins += 20;
             document.getElementById('sessionCoins').textContent = this.sessionCoins;
             AudioEngine.playCoin();
-            // Emit particles
             for (let k = 0; k < 6; k++) {
               this.particles.push({
                 x: c.x,
@@ -657,7 +684,6 @@
           }
         }
 
-        // Particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
           const pt = this.particles[i];
           pt.x += pt.vx;
@@ -672,7 +698,6 @@
         const width = rect.width;
         const height = rect.height;
 
-        // Background Sky
         const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
         skyGradient.addColorStop(0, '#0284c7');
         skyGradient.addColorStop(0.7, '#38bdf8');
@@ -680,28 +705,23 @@
         ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, width, height);
 
-        // Ground Strip
         ctx.fillStyle = '#15803d';
         ctx.fillRect(0, height - 25, width, 8);
         ctx.fillStyle = '#854d0e';
         ctx.fillRect(0, height - 17, width, 17);
 
-        // Render Pipes
         for (const p of this.pipes) {
           ctx.fillStyle = '#22c55e';
-          // Top Pipe
           ctx.fillRect(p.x, 0, p.width, p.topH);
           ctx.fillStyle = '#16a34a';
           ctx.fillRect(p.x - 3, p.topH - 16, p.width + 6, 16);
 
-          // Bottom Pipe
           ctx.fillStyle = '#22c55e';
           ctx.fillRect(p.x, p.bottomY, p.width, p.bottomH);
           ctx.fillStyle = '#16a34a';
           ctx.fillRect(p.x - 3, p.bottomY, p.width + 6, 16);
         }
 
-        // Render Coins
         for (const c of this.coinsInWorld) {
           ctx.beginPath();
           ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
@@ -710,7 +730,6 @@
           ctx.lineWidth = 2;
           ctx.strokeStyle = '#fef08a';
           ctx.stroke();
-          // Inner icon
           ctx.fillStyle = '#713f12';
           ctx.font = 'bold 9px sans-serif';
           ctx.textAlign = 'center';
@@ -718,18 +737,15 @@
           ctx.fillText('৳', c.x, c.y);
         }
 
-        // Render Particles
         for (const pt of this.particles) {
           ctx.fillStyle = pt.color;
           ctx.fillRect(pt.x, pt.y, 3, 3);
         }
 
-        // Render Bird
         ctx.save();
         ctx.translate(this.bird.x, this.bird.y);
         ctx.rotate(this.bird.rotation);
 
-        // Bird Body
         ctx.beginPath();
         ctx.arc(0, 0, this.bird.radius, 0, Math.PI * 2);
         ctx.fillStyle = '#f59e0b';
@@ -738,7 +754,6 @@
         ctx.strokeStyle = '#b45309';
         ctx.stroke();
 
-        // Eye
         ctx.beginPath();
         ctx.arc(6, -4, 4, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
@@ -748,7 +763,6 @@
         ctx.fillStyle = '#000000';
         ctx.fill();
 
-        // Beak
         ctx.beginPath();
         ctx.moveTo(10, 0);
         ctx.lineTo(20, 3);
@@ -756,7 +770,6 @@
         ctx.fillStyle = '#f97316';
         ctx.fill();
 
-        // Wing
         ctx.beginPath();
         ctx.ellipse(-5, 3, 7, 4, -0.2, 0, Math.PI * 2);
         ctx.fillStyle = '#fde68a';
@@ -772,18 +785,9 @@
           window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
         }
 
-        // Anti-Cheat: Validate time elapsed vs score
-        const timeSpentSeconds = (Date.now() - AppState.gameSessionStart) / 1000;
-        const maxPossibleScore = Math.floor(timeSpentSeconds * 1.5) + 5;
-        if (this.score > maxPossibleScore && this.score > 20) {
-          showToast('সন্দেহজনক কার্যকলাপ ধরা পড়েছে! কয়েন বাতিল।', 'error');
-          this.sessionCoins = 0;
-        }
-
         document.getElementById('finalScoreText').textContent = this.score;
         document.getElementById('finalCoinsText').textContent = `+${this.sessionCoins}`;
 
-        // Disable revive button if already used
         const reviveBtn = document.getElementById('btnReviveAd');
         if (AppState.reviveUsedInSession) {
           reviveBtn.classList.add('opacity-50', 'pointer-events-none');
@@ -798,14 +802,12 @@
       }
     };
 
-    // Game Loop
     function gameLoop() {
       Game.update();
       Game.render();
       requestAnimationFrame(gameLoop);
     }
 
-    // Input handlers
     canvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       Game.jump();
@@ -818,7 +820,6 @@
       }
     });
 
-    // Start Button
     document.getElementById('btnStartGame').addEventListener('click', () => {
       AudioEngine.init();
       resizeCanvas();
@@ -827,64 +828,25 @@
       Game.active = true;
     });
 
-    // Monetag Rewarded Ad Handler with Fallback Simulator
-    function triggerMonetagAd(rewardType, callback) {
-      // Check if official Monetag Web function exists (e.g., show_XXXXXXX)
-      const officialAdFunction = window[`show_${window.monetagZoneId}`];
-
-      if (typeof officialAdFunction === 'function') {
-        // Real Monetag Rewarded Ad Trigger
-        officialAdFunction()
-          .then(() => {
-            callback(true);
-          })
-          .catch((err) => {
-            showToast('অ্যাড লোড হতে সমস্যা হয়েছে, পরে চেষ্টা করুন', 'error');
-            callback(false);
-          });
-      } else {
-        // Simulated Rewarded Ad Experience (Zero Broken States in Preview)
-        const adModal = document.getElementById('simulatedAdOverlay');
-        const countdownEl = document.getElementById('adCountdown');
-        let timeLeft = 5;
-
-        adModal.classList.remove('hidden');
-        adModal.classList.add('flex');
-        countdownEl.textContent = timeLeft;
-
-        const timer = setInterval(() => {
-          timeLeft--;
-          countdownEl.textContent = timeLeft;
-          if (timeLeft <= 0) {
-            clearInterval(timer);
-            adModal.classList.remove('flex');
-            adModal.classList.add('hidden');
-            callback(true);
-          }
-        }, 1000);
-      }
-    }
-
-    // Revive Action
+    // Revive Action with Monetag
     document.getElementById('btnReviveAd').addEventListener('click', () => {
-      triggerMonetagAd('revive', (success) => {
+      triggerOfficialMonetagAd((success) => {
         if (success) {
           AppState.reviveUsedInSession = true;
           document.getElementById('gameOverModal').classList.remove('flex');
           document.getElementById('gameOverModal').classList.add('hidden');
-          // Revive player by clearing nearby pipes
           Game.bird.y = canvas.getBoundingClientRect().height / 2;
           Game.bird.vy = 0;
           Game.pipes = Game.pipes.filter(p => p.x > Game.bird.x + 120);
           Game.active = true;
-          showToast('রিভাইভ সফল হয়েছে! খেলা চালু হলো।', 'success');
+          showToast('রিভাইভ সফল হয়েছে! খেলা আবার শুরু হলো।', 'success');
         }
       });
     });
 
-    // 2x Reward Action
+    // 2X Multiplier with Monetag
     document.getElementById('btnDoubleRewardAd').addEventListener('click', () => {
-      triggerMonetagAd('double', (success) => {
+      triggerOfficialMonetagAd((success) => {
         if (success) {
           Game.sessionCoins = Game.sessionCoins * 2;
           document.getElementById('finalCoinsText').textContent = `+${Game.sessionCoins} (2X)`;
@@ -907,16 +869,16 @@
 
     // Direct Ad in Tasks Tab
     document.getElementById('btnDirectWatchAd').addEventListener('click', () => {
-      triggerMonetagAd('task', (success) => {
+      triggerOfficialMonetagAd((success) => {
         if (success) {
           AppState.coins += 200;
           updateBalances();
-          showToast('বোনাস ২০০ কয়েন যোগ হয়েছে!', 'success');
+          showToast('বোনাস ২০০ কয়েন সফলভাবে যোগ হয়েছে!', 'success');
         }
       });
     });
 
-    // Telegram Channel Join Simulator
+    // Channel Join Simulator
     document.getElementById('btnJoinChannel').addEventListener('click', () => {
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.openTelegramLink('https://t.me/telegram');
@@ -930,19 +892,6 @@
         document.getElementById('btnJoinChannel').textContent = 'সম্পন্ন';
         document.getElementById('btnJoinChannel').classList.add('bg-slate-700', 'pointer-events-none');
       }, 3000);
-    });
-
-    // Copy Referral Link
-    document.getElementById('btnCopyRef').addEventListener('click', () => {
-      const input = document.getElementById('refLinkInput');
-      input.select();
-      input.setSelectionRange(0, 99999);
-      try {
-        document.execCommand('copy');
-        showToast('রেফারেল লিঙ্ক কপি করা হয়েছে!', 'success');
-      } catch (err) {
-        showToast('কপি ব্যর্থ হয়েছে', 'error');
-      }
     });
 
     // bKash Withdrawal Processing
@@ -978,7 +927,6 @@
       const phone = document.getElementById('bkashNumber').value.trim();
       const amount = parseFloat(document.getElementById('withdrawAmount').value);
 
-      // Validation
       const bdPhoneRegex = /^01[3-9]\d{8}$/;
       if (!bdPhoneRegex.test(phone)) {
         showToast('সঠিক ১১ ডিজিটের bKash নম্বর দিন (যেমন: 01712345678)', 'error');
@@ -996,7 +944,6 @@
         return;
       }
 
-      // Process Withdrawal
       AppState.coins -= requiredCoins;
       updateBalances();
 
@@ -1016,10 +963,19 @@
       document.getElementById('bkashNumber').value = '';
       document.getElementById('withdrawAmount').value = '';
 
-      showToast(`৳${amount} উইথড্র রিকোয়েস্ট অ্যাডমিনের কাছে পাঠানো হয়েছে!`, 'success');
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.sendData(JSON.stringify({
+          type: 'BKASH_PAYOUT',
+          phone: phone,
+          bdt: amount,
+          coins: requiredCoins
+        }));
+      }
+
+      showToast(`৳${amount} উইথড্র রিকোয়েস্ট জমা হয়েছে!`, 'success');
     });
 
-    // Tab Navigation
+    // Tab Switching
     const navBtnGame = document.getElementById('navBtnGame');
     const navBtnWallet = document.getElementById('navBtnWallet');
     const navBtnTasks = document.getElementById('navBtnTasks');
@@ -1049,6 +1005,7 @@
         tabTasks.classList.remove('hidden');
         navBtnTasks.classList.add('text-amber-400');
         navBtnTasks.classList.remove('text-slate-400');
+        checkAndPreloadAd();
       }
     }
 
@@ -1071,12 +1028,15 @@
       }
     });
 
-    // Window Init
+    // Start Everything
     window.onload = function() {
       resizeCanvas();
       updateBalances();
       renderHistory();
       requestAnimationFrame(gameLoop);
+
+      // Preload Monetag Ad after 1 second
+      setTimeout(checkAndPreloadAd, 1200);
     };
   </script>
 </body>
