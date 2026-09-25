@@ -1,29 +1,28 @@
-
 <!DOCTYPE html>
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Flappy Coin Quest - Telegram Mini App</title>
-  
+  <title>Flappy & Friends - Multi-Game Cash Arcade</title>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Monetag Rewarded Ad Official SDK (Strict HTTPS & Preload Support) -->
+  <!-- Monetag Rewarded Ad Official SDK -->
   <script src="https://libtl.com/sdk.js" data-zone="11884798" data-sdk="show_11884798"></script>
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Press+Start+2P&family=Outfit:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700;800&family=Outfit:wght@400;600;700;900&display=swap');
 
     :root {
-      --primary: #f59e0b;
-      --accent: #10b981;
-      --bg-dark: #0f172a;
-      --card-bg: #1e293b;
+      --bg-dark: #090d16;
+      --card-bg: #131c2e;
+      --accent-gold: #f59e0b;
+      --accent-green: #10b981;
     }
 
     body {
@@ -31,8 +30,15 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
-      background-color: var(--bg-dark);
+      background: radial-gradient(circle at top, #1e293b 0%, #090d16 100%);
       color: #f8fafc;
+    }
+
+    .glow-gold {
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+    }
+    .glow-card {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
     }
 
     /* Custom Scrollbar */
@@ -40,133 +46,404 @@
       width: 4px;
     }
     ::-webkit-scrollbar-track {
-      background: #1e293b;
+      background: #0f172a;
     }
     ::-webkit-scrollbar-thumb {
       background: #f59e0b;
       border-radius: 4px;
-    }
-
-    .glow-gold {
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
     }
   </style>
 </head>
 
 <body class="min-h-screen flex flex-col justify-between items-center overflow-x-hidden pb-16">
 
-  <!-- Top Navigation & Stats Bar -->
-  <header class="w-full max-w-md bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-3 sticky top-0 z-30 flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <div id="userAvatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center font-bold text-white shadow-md text-sm">
-        <i class="fa-solid fa-user"></i>
+  <!-- ================= TOP HEADER BAR ================= -->
+  <header class="w-full max-w-md bg-slate-900/95 backdrop-blur-md border-b border-slate-800 p-3 sticky top-0 z-40 flex items-center justify-between">
+    <div class="flex items-center space-x-2.5">
+      <div id="userAvatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center font-bold text-white shadow-md text-sm border border-white/20">
+        <i class="fa-solid fa-gamepad"></i>
       </div>
       <div>
-        <h2 id="userName" class="text-xs font-bold text-slate-200">টেলিগ্রাম গেমার</h2>
+        <h2 id="userName" class="text-xs font-bold text-slate-200">গেমিং হাব প্লেয়ার</h2>
         <span id="adStatusBadge" class="inline-flex items-center text-[10px] text-amber-400 font-semibold cursor-pointer">
           <span id="adStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1"></span>
-          <span id="adStatusText">অ্যাড SDK লোড হচ্ছে...</span>
+          <span id="adStatusText">Monetag 11884798</span>
         </span>
       </div>
     </div>
 
     <!-- Live Coin & BDT Balance Badge -->
     <div class="flex items-center space-x-2 bg-slate-800/90 px-3 py-1.5 rounded-full border border-amber-500/30">
-      <div class="flex items-center text-amber-400 text-xs font-bold">
-        <i class="fa-solid fa-coins mr-1 text-amber-400 animate-spin" style="animation-duration: 4s;"></i>
+      <div class="flex items-center text-amber-400 text-xs font-black">
+        <i class="fa-solid fa-coins mr-1 text-amber-400"></i>
         <span id="headerCoinBalance">0</span>
       </div>
-      <span class="text-slate-500 text-xs">|</span>
+      <span class="text-slate-600 text-xs">|</span>
       <div class="text-[11px] font-bold text-emerald-400">
         ৳<span id="headerBdtBalance">0.00</span>
       </div>
     </div>
 
     <!-- Sound Toggle -->
-    <button id="btnSoundToggle" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-amber-400 transition">
+    <button id="btnSoundToggle" class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-amber-400 transition active:scale-95">
       <i id="soundIcon" class="fa-solid fa-volume-high text-xs"></i>
     </button>
   </header>
 
-  <!-- Main View Container -->
-  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-center p-2 relative">
+  <!-- ================= MAIN CONTENT VIEW ================= -->
+  <main class="w-full max-w-md flex-1 flex flex-col items-center justify-start p-3 relative">
 
-    <!-- TAB 1: GAME SCREEN -->
-    <div id="tabGame" class="w-full flex flex-col items-center justify-center relative">
-      <div class="relative w-full aspect-[9/14] max-h-[580px] bg-sky-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60">
-        <canvas id="gameCanvas" class="w-full h-full block cursor-pointer"></canvas>
-
-        <!-- Canvas HUD Overlay -->
-        <div id="hudOverlay" class="absolute top-4 left-0 right-0 flex justify-between px-5 pointer-events-none z-10 transition-opacity">
-          <div class="bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 text-white font-bold text-sm">
-            স্কোর: <span id="currentScore" class="text-amber-400 text-base">0</span>
+    <!-- ================= VIEW 1: ARCADE LOBBY (GAME SELECTOR) ================= -->
+    <div id="viewLobby" class="w-full space-y-4">
+      
+      <!-- Daily Reward / Energy Banner -->
+      <div class="w-full bg-gradient-to-r from-amber-600/30 via-slate-800 to-indigo-900/40 border border-amber-500/30 rounded-2xl p-3.5 flex items-center justify-between glow-card">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center text-lg font-black shadow-lg">
+            <i class="fa-solid fa-calendar-check"></i>
           </div>
-          <div class="bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 text-amber-300 font-bold text-sm">
-            <i class="fa-solid fa-coins text-amber-400"></i> +<span id="sessionCoins">0</span>
+          <div>
+            <h3 class="text-xs font-bold text-white">দৈনিক লগইন রিওয়ার্ড</h3>
+            <p class="text-[10px] text-amber-300 font-semibold" id="dailyBonusStatus">+১০০ কয়েন সংগ্রহ করুন</p>
+          </div>
+        </div>
+        <button id="btnClaimDaily" class="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 text-slate-950 font-black rounded-xl text-xs transition active:scale-95">
+          ক্লেইম
+        </button>
+      </div>
+
+      <!-- Section Title -->
+      <div class="flex items-center justify-between pt-1">
+        <h2 class="text-sm font-black text-white flex items-center space-x-2">
+          <span class="w-2 h-4 bg-amber-500 rounded-sm"></span>
+          <span>খেলুন ও কয়েন জিতুন (৫টি গেম)</span>
+        </h2>
+        <span class="text-[10px] bg-slate-800 text-amber-400 px-2 py-0.5 rounded-full border border-slate-700 font-bold">ইনস্ট্যান্ট উইথড্র</span>
+      </div>
+
+      <!-- Games Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        
+        <!-- Game 1: Flappy Bird -->
+        <div onclick="openGame('flappy')" class="bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/60 rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer transition transform active:scale-95 shadow-lg group">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg border border-sky-500/30 group-hover:scale-110 transition">
+              <i class="fa-solid fa-dove"></i>
+            </div>
+            <span class="text-[9px] bg-sky-500/20 text-sky-300 font-bold px-1.5 py-0.5 rounded">অ্যাকশন</span>
+          </div>
+          <h3 class="text-xs font-bold text-white mb-0.5">ফ্ল্যাপি কোয়েস্ট</h3>
+          <p class="text-[10px] text-slate-400 mb-2">ট্যাপ করে অবস্টেকল পার করুন</p>
+          <div class="w-full py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-center text-[10px] font-bold">
+            খেলুন ▶
           </div>
         </div>
 
-        <!-- Start Screen Overlay -->
-        <div id="startScreen" class="absolute inset-0 bg-slate-950/75 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20 transition-all">
-          <div class="w-20 h-20 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-2xl flex items-center justify-center text-3xl text-slate-900 shadow-xl mb-4 transform hover:scale-105 transition glow-gold">
+        <!-- Game 2: Lucky Spin Wheel -->
+        <div onclick="openGame('spin')" class="bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/60 rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer transition transform active:scale-95 shadow-lg group">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30 group-hover:scale-110 transition">
+              <i class="fa-solid fa-dharmachakra"></i>
+            </div>
+            <span id="spinLeftBadge" class="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded">৩ স্পিন বাকি</span>
+          </div>
+          <h3 class="text-xs font-bold text-white mb-0.5">লাকি স্পিন হুইল</h3>
+          <p class="text-[10px] text-slate-400 mb-2">চাকা ঘুরিয়ে ১০০০ কয়েন পর্যন্ত</p>
+          <div class="w-full py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-center text-[10px] font-bold">
+            স্পিন করুন 🌀
+          </div>
+        </div>
+
+        <!-- Game 3: Scratch & Win -->
+        <div onclick="openGame('scratch')" class="bg-slate-800/90 border border-slate-700/80 hover:border-emerald-500/60 rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer transition transform active:scale-95 shadow-lg group">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg border border-emerald-500/30 group-hover:scale-110 transition">
+              <i class="fa-solid fa-gift"></i>
+            </div>
+            <span id="scratchLeftBadge" class="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.5 rounded">২ কার্ড বাকি</span>
+          </div>
+          <h3 class="text-xs font-bold text-white mb-0.5">গোল্ডেন স্ক্র্যাচ</h3>
+          <p class="text-[10px] text-slate-400 mb-2">আঙুল দিয়ে ঘষে কয়েন জিতুন</p>
+          <div class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-center text-[10px] font-bold">
+            স্ক্র্যাচ 🎁
+          </div>
+        </div>
+
+        <!-- Game 4: Brain Quiz -->
+        <div onclick="openGame('quiz')" class="bg-slate-800/90 border border-slate-700/80 hover:border-indigo-500/60 rounded-2xl p-3.5 flex flex-col justify-between cursor-pointer transition transform active:scale-95 shadow-lg group">
+          <div class="flex items-center justify-between mb-2">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg border border-indigo-500/30 group-hover:scale-110 transition">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+            <span class="text-[9px] bg-indigo-500/20 text-indigo-300 font-bold px-1.5 py-0.5 rounded">মেধা যাচাই</span>
+          </div>
+          <h3 class="text-xs font-bold text-white mb-0.5">ট্যালেন্ট কুইজ</h3>
+          <p class="text-[10px] text-slate-400 mb-2">প্রশ্নের সঠিক উত্তরে কয়েন</p>
+          <div class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-center text-[10px] font-bold">
+            কুইজ খেলুন 🧠
+          </div>
+        </div>
+
+        <!-- Game 5: Target Knife Hit (Span 2) -->
+        <div onclick="openGame('knife')" class="col-span-2 bg-gradient-to-r from-rose-950/40 via-slate-800 to-slate-900 border border-rose-500/40 hover:border-rose-400 rounded-2xl p-3.5 flex items-center justify-between cursor-pointer transition transform active:scale-[0.98] shadow-lg">
+          <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl border border-rose-500/30">
+              <i class="fa-solid fa-bullseye animate-pulse"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xs font-black text-white">টার্গেট হিট (Knife Dash)</h3>
+                <span class="text-[9px] bg-rose-500/20 text-rose-300 font-bold px-1.5 py-0.5 rounded">নতুন</span>
+              </div>
+              <p class="text-[10px] text-slate-400">ঘূর্ণায়মান কাঠে ছুরি ছুড়ে কয়েন জিতুন</p>
+            </div>
+          </div>
+          <div class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold">
+            খেলুন 🎯
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= SUB-VIEW: GAME 1 (FLAPPY BIRD) ================= -->
+    <div id="gameFlappyView" class="w-full hidden flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-2">
+        <button onclick="backToLobby()" class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>লবিতে ফিরুন</span>
+        </button>
+        <span class="text-xs font-bold text-amber-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">ফ্ল্যাপি কোয়েস্ট</span>
+      </div>
+
+      <div class="relative w-full aspect-[9/13] max-h-[500px] bg-sky-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
+        <canvas id="flappyCanvas" class="w-full h-full block cursor-pointer"></canvas>
+
+        <div id="flappyHud" class="absolute top-3 left-0 right-0 flex justify-between px-4 pointer-events-none z-10">
+          <div class="bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white font-bold text-xs border border-white/10">
+            স্কোর: <span id="flappyScoreText" class="text-amber-400 text-sm">0</span>
+          </div>
+          <div class="bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-amber-300 font-bold text-xs border border-white/10">
+            +<span id="flappyCoinText">0</span> কয়েন
+          </div>
+        </div>
+
+        <!-- Flappy Start Overlay -->
+        <div id="flappyStartModal" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
+          <div class="w-16 h-16 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-2xl flex items-center justify-center text-3xl text-slate-950 mb-3 shadow-lg glow-gold">
             <i class="fa-solid fa-dove animate-bounce"></i>
           </div>
-          <h1 class="text-2xl font-black text-white tracking-wide mb-1">FLAPPY CASH</h1>
-          <p class="text-slate-300 text-xs mb-5 max-w-[240px]">ট্যাপ করে অবস্টেকল পার করুন, কয়েন কামান ও bKash-এ টাকা তুলুন!</p>
-
-          <button id="btnStartGame" class="w-48 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-slate-950 font-black rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2">
-            <i class="fa-solid fa-play"></i>
-            <span>খেলা শুরু করুন</span>
+          <h2 class="text-lg font-black text-white mb-1">FLAPPY CASH</h2>
+          <p class="text-xs text-slate-300 mb-4">স্ক্রিনে ট্যাপ করে উড়ুন, পাইপ এড়িয়ে যান</p>
+          <button id="btnStartFlappy" class="w-44 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black rounded-xl text-xs shadow-lg active:scale-95 transition">
+            শুরু করুন ▶
           </button>
-          
-          <div class="mt-4 flex items-center space-x-2 text-[11px] text-amber-400/80 bg-amber-500/10 px-3 py-1 rounded-full">
-            <i class="fa-solid fa-bolt"></i>
-            <span>Monetag Zone 11884798 লাইভ</span>
-          </div>
         </div>
 
-        <!-- Game Over & Ad Revive Modal -->
-        <div id="gameOverModal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md hidden flex-col items-center justify-center p-5 z-25 text-center">
-          <div class="w-14 h-14 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-500 flex items-center justify-center text-2xl mb-2">
+        <!-- Flappy Game Over Modal -->
+        <div id="flappyOverModal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md hidden flex-col items-center justify-center p-4 z-30 text-center">
+          <div class="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-500 flex items-center justify-center text-xl mb-1.5">
             <i class="fa-solid fa-skull"></i>
           </div>
-          <h2 class="text-xl font-black text-rose-400 mb-1">গেম ওভার!</h2>
-          <p class="text-xs text-slate-400 mb-3">আপনি পাইপে ধাক্কা খেয়েছেন</p>
+          <h3 class="text-base font-black text-rose-400 mb-1">গেম ওভার!</h3>
+          <p class="text-[11px] text-slate-400 mb-3">স্কোর: <span id="finalFlappyScore" class="text-white font-bold">0</span> | কয়েন: <span id="finalFlappyCoins" class="text-amber-400 font-bold">+0</span></p>
 
-          <div class="w-full bg-slate-800/80 border border-slate-700/60 rounded-xl p-3.5 mb-4 flex justify-around">
-            <div>
-              <div class="text-[11px] text-slate-400">অর্জিত স্কোর</div>
-              <div id="finalScoreText" class="text-xl font-black text-white">0</div>
-            </div>
-            <div class="w-px bg-slate-700"></div>
-            <div>
-              <div class="text-[11px] text-slate-400">নতুন কয়েন</div>
-              <div id="finalCoinsText" class="text-xl font-black text-amber-400">+0</div>
-            </div>
-          </div>
-
-          <!-- Revive Option with Rewarded Ad -->
-          <button id="btnReviveAd" class="w-full py-3 mb-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl shadow-lg transform active:scale-95 transition flex items-center justify-center space-x-2">
+          <button id="btnFlappyRevive" class="w-full py-2.5 mb-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl text-xs shadow-md active:scale-95 transition flex items-center justify-center space-x-1.5">
             <i class="fa-solid fa-video text-amber-300"></i>
-            <span id="reviveBtnText">অ্যাড দেখে রিভাইভ করুন (১ বার)</span>
+            <span>অ্যাড দেখে রিভাইভ করুন (১ বার)</span>
           </button>
 
-          <!-- 2x Reward with Ad -->
-          <button id="btnDoubleRewardAd" class="w-full py-2.5 mb-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-md transform active:scale-95 transition flex items-center justify-center space-x-2 text-xs">
+          <button id="btnFlappy2X" class="w-full py-2.5 mb-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md active:scale-95 transition flex items-center justify-center space-x-1.5">
             <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i>
-            <span>অ্যাড দেখে কয়েন ২ গুণ করুন (2X)</span>
+            <span>অ্যাড দেখে কয়েন দ্বিগুণ (2X) করুন</span>
           </button>
 
-          <!-- Claim & Restart -->
-          <button id="btnCollectAndRestart" class="w-full py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs transition flex items-center justify-center space-x-1">
-            <i class="fa-solid fa-check"></i>
-            <span>ব্যালেন্সে যোগ করে নতুন করে খেলুন</span>
+          <button id="btnFlappyRestart" class="w-full py-2 bg-slate-700/80 text-slate-200 font-semibold rounded-xl text-xs active:scale-95 transition">
+            ব্যালেন্সে নিয়ে নতুন গেম
           </button>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: WITHDRAW & WALLET SCREEN -->
+    <!-- ================= SUB-VIEW: GAME 2 (LUCKY SPIN WHEEL) ================= -->
+    <div id="gameSpinView" class="w-full hidden flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-2">
+        <button onclick="backToLobby()" class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>লবিতে ফিরুন</span>
+        </button>
+        <span class="text-xs font-bold text-amber-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">লাকি স্পিন হুইল</span>
+      </div>
+
+      <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex flex-col items-center shadow-xl">
+        <div class="relative w-64 h-64 mb-4 flex items-center justify-center">
+          <!-- Wheel Pointer -->
+          <div class="absolute -top-2 z-20 text-amber-400 text-2xl filter drop-shadow">
+            <i class="fa-solid fa-caret-down"></i>
+          </div>
+          <!-- Wheel Canvas -->
+          <canvas id="wheelCanvas" width="260" height="260" class="rounded-full shadow-2xl"></canvas>
+          <!-- Center Button / Hub -->
+          <div class="absolute w-12 h-12 rounded-full bg-slate-900 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-black text-xs z-10 shadow-lg">
+            ৳
+          </div>
+        </div>
+
+        <div class="text-center mb-3">
+          <span class="text-xs text-slate-400">অবশিষ্ট ফ্রি স্পিন:</span>
+          <span id="spinCountDisplay" class="text-sm font-black text-amber-400">3</span>
+        </div>
+
+        <button id="btnSpinNow" class="w-full max-w-xs py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black rounded-xl text-xs shadow-lg transition active:scale-95 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-rotate text-sm"></i>
+          <span>স্পিন করুন!</span>
+        </button>
+
+        <button id="btnAddSpinsAd" class="w-full max-w-xs mt-2 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-video text-yellow-300"></i>
+          <span>অ্যাড দেখে +২ স্পিন আনলক করুন</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= SUB-VIEW: GAME 3 (SCRATCH CARD) ================= -->
+    <div id="gameScratchView" class="w-full hidden flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-2">
+        <button onclick="backToLobby()" class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>লবিতে ফিরুন</span>
+        </button>
+        <span class="text-xs font-bold text-emerald-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">গোল্ডেন স্ক্র্যাচ</span>
+      </div>
+
+      <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex flex-col items-center shadow-xl">
+        <p class="text-xs text-slate-300 mb-3 text-center">আঙুল দিয়ে গোল্ডেন প্রলেপ ঘষে রিওয়ার্ড বের করুন</p>
+
+        <!-- Scratch Canvas Container -->
+        <div class="relative w-64 h-40 rounded-xl overflow-hidden shadow-2xl border-2 border-amber-500/40 mb-4 bg-slate-900 flex items-center justify-center">
+          <!-- Underlying Hidden Prize Box -->
+          <div id="scratchPrizeBox" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-tr from-amber-600 to-yellow-400 text-slate-950 p-3 text-center">
+            <i class="fa-solid fa-coins text-3xl mb-1 text-slate-950"></i>
+            <div class="text-xs font-bold uppercase tracking-wider">অভিনন্দন!</div>
+            <div id="scratchAmountText" class="text-2xl font-black">+150 কয়েন</div>
+          </div>
+
+          <!-- Canvas Overlay To Scratch Off -->
+          <canvas id="scratchCanvas" width="256" height="160" class="absolute inset-0 z-10 cursor-pointer"></canvas>
+        </div>
+
+        <div class="text-center mb-3">
+          <span class="text-xs text-slate-400">অবশিষ্ট কার্ড:</span>
+          <span id="scratchCountDisplay" class="text-sm font-black text-emerald-400">2</span>
+        </div>
+
+        <button id="btnClaimScratch" class="w-full max-w-xs py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition active:scale-95 hidden">
+          কয়েন ব্যালেন্সে যোগ করুন
+        </button>
+
+        <button id="btnAddScratchAd" class="w-full max-w-xs mt-2 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-video"></i>
+          <span>অ্যাড দেখে নতুন কার্ড আনলক করুন</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= SUB-VIEW: GAME 4 (BRAIN QUIZ) ================= -->
+    <div id="gameQuizView" class="w-full hidden flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-2">
+        <button onclick="backToLobby()" class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>লবিতে ফিরুন</span>
+        </button>
+        <span class="text-xs font-bold text-indigo-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">মেধা যাচাই কুইজ</span>
+      </div>
+
+      <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-4 flex flex-col shadow-xl">
+        <!-- Quiz HUD -->
+        <div class="flex items-center justify-between mb-3 text-xs">
+          <span class="text-slate-400">প্রশ্ন <span id="quizIndex" class="font-bold text-white">1</span> / 5</span>
+          <div class="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-full border border-slate-700">
+            <i class="fa-regular fa-clock text-amber-400"></i>
+            <span id="quizTimerText" class="font-black text-amber-400">15s</span>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-3.5 mb-4 text-center min-h-[70px] flex items-center justify-center">
+          <h3 id="quizQuestionText" class="text-xs font-bold text-slate-100 leading-relaxed">
+            লোড হচ্ছে...
+          </h3>
+        </div>
+
+        <!-- Options Buttons -->
+        <div id="quizOptionsContainer" class="space-y-2 mb-4">
+          <!-- 4 option buttons dynamically generated -->
+        </div>
+
+        <!-- Lifeline with Ad -->
+        <button id="btnQuizLifeline" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-yellow-300"></i>
+          <span>অ্যাড দেখে ৫০-৫০ লাইফলাইন নিন (২টি ভুল অপশন বাদ)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= SUB-VIEW: GAME 5 (TARGET KNIFE DASH) ================= -->
+    <div id="gameKnifeView" class="w-full hidden flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-2">
+        <button onclick="backToLobby()" class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>লবিতে ফিরুন</span>
+        </button>
+        <span class="text-xs font-bold text-rose-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">টার্গেট ড্যাশ</span>
+      </div>
+
+      <div class="relative w-full aspect-[9/13] max-h-[480px] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
+        <canvas id="knifeCanvas" class="w-full h-full block cursor-pointer"></canvas>
+
+        <div class="absolute top-3 left-4 right-4 flex justify-between pointer-events-none z-10">
+          <div class="bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-white font-bold text-xs border border-white/10">
+            স্টেজ: <span id="knifeStageText" class="text-rose-400 text-sm">1</span>
+          </div>
+          <div class="bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full text-amber-300 font-bold text-xs border border-white/10">
+            ছুড়তে বাকি: <span id="knifeCountText" class="text-amber-400">5</span>
+          </div>
+        </div>
+
+        <!-- Knife Start Overlay -->
+        <div id="knifeStartModal" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center z-20">
+          <div class="w-16 h-16 bg-gradient-to-tr from-rose-500 to-amber-500 rounded-2xl flex items-center justify-center text-3xl text-white mb-3 shadow-lg">
+            <i class="fa-solid fa-bullseye animate-spin" style="animation-duration: 6s;"></i>
+          </div>
+          <h2 class="text-lg font-black text-white mb-1">KNIFE TARGET DASH</h2>
+          <p class="text-xs text-slate-300 mb-4">স্ক্রিনে ট্যাপ করে কাঠের চাকায় ছুরি ছুড়ুন। অন্য ছুরিতে ধাক্কা খাওয়া যাবে না!</p>
+          <button id="btnStartKnife" class="w-44 py-2.5 bg-gradient-to-r from-rose-500 to-amber-500 text-white font-black rounded-xl text-xs shadow-lg active:scale-95 transition">
+            শুরু করুন 🎯
+          </button>
+        </div>
+
+        <!-- Knife Game Over Modal -->
+        <div id="knifeOverModal" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md hidden flex-col items-center justify-center p-4 z-30 text-center">
+          <div class="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-500 flex items-center justify-center text-xl mb-1.5">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 class="text-base font-black text-rose-400 mb-1">ছুড়িটি ধাক্কা খেয়েছে!</h3>
+          <p class="text-[11px] text-slate-400 mb-3">মোট স্কোর: <span id="finalKnifeScore" class="text-white font-bold">0</span></p>
+
+          <button id="btnKnifeRevive" class="w-full py-2.5 mb-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl text-xs shadow-md active:scale-95 transition flex items-center justify-center space-x-1.5">
+            <i class="fa-solid fa-video text-amber-300"></i>
+            <span>অ্যাড দেখে রিভাইভ করুন</span>
+          </button>
+
+          <button id="btnKnifeRestart" class="w-full py-2 bg-slate-700/80 text-slate-200 font-semibold rounded-xl text-xs active:scale-95 transition">
+            কয়েন নিন ও নতুন গেম
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: WITHDRAW & WALLET SCREEN ================= -->
     <div id="tabWallet" class="w-full hidden flex-col items-center space-y-4">
       <!-- Balance Card -->
       <div class="w-full bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-5 rounded-2xl relative overflow-hidden shadow-xl">
@@ -179,10 +456,9 @@
           <span class="text-xs font-bold text-amber-500">কয়েন</span>
         </div>
         <div class="mt-2 text-sm text-emerald-400 font-bold flex items-center">
-          <i class="fa-solid fa-bangladeshi-taka-sign mr-1"></i>
-          <span id="walletBdtAmount">0.00</span> টাকা
+          ৳ <span id="walletBdtAmount" class="ml-1">0.00</span> টাকা
         </div>
-        <div class="mt-3 text-[11px] text-slate-400 bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+        <div class="mt-3 text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
           💡 কনভার্শন রেট: <strong class="text-amber-400">১,০০০ কয়েন = ১.০০ টাকা</strong> | সর্বনিম্ন উইথড্র: <strong class="text-emerald-400">৫০ টাকা</strong>
         </div>
       </div>
@@ -220,7 +496,7 @@
             </div>
           </div>
 
-          <button type="submit" class="w-full py-3 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95 flex items-center justify-center space-x-1.5">
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95 flex items-center justify-center space-x-1.5">
             <i class="fa-solid fa-paper-plane"></i>
             <span>উইথড্র রিকোয়েস্ট পাঠান</span>
           </button>
@@ -239,7 +515,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: TASKS & ADS SCREEN -->
+    <!-- ================= VIEW 3: TASKS & ADS SCREEN ================= -->
     <div id="tabTasks" class="w-full hidden flex-col items-center space-y-3">
       <div class="w-full bg-slate-800/90 border border-slate-700 p-4 rounded-2xl">
         <h3 class="text-sm font-bold text-white mb-1">বোনাস অ্যাড ও ডেইলি টাস্ক</h3>
@@ -282,22 +558,23 @@
         <!-- Ad Diagnostic Troubleshooter Box -->
         <div class="mt-4 p-3 bg-slate-900/90 rounded-xl border border-slate-700 text-left">
           <div class="text-[11px] font-bold text-slate-300 flex items-center justify-between mb-1">
-            <span>⚙️ Ad ডায়াগনস্টিক তথ্য</span>
-            <button id="btnTestAdLoad" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-amber-400 border border-slate-600">চেক করুন</button>
+            <span>⚙️ Monetag SDK স্ট্যাটাস</span>
+            <button id="btnTestAdLoad" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded text-amber-400 border border-slate-600">টেস্ট করুন</button>
           </div>
           <p id="diagnosticDetails" class="text-[10px] text-slate-400 leading-relaxed">
-            SDK অবস্থা: পরীক্ষা করা হচ্ছে...
+            পরীক্ষা করা হচ্ছে...
           </p>
         </div>
       </div>
     </div>
+
   </main>
 
-  <!-- Bottom Tab Navigation -->
-  <nav class="w-full max-w-md bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 z-30 flex justify-around py-2 px-3">
-    <button id="navBtnGame" class="flex flex-col items-center text-amber-400 font-bold text-[10px] space-y-1 transition">
+  <!-- ================= BOTTOM NAVIGATION BAR ================= -->
+  <nav class="w-full max-w-md bg-slate-900/95 backdrop-blur-md border-t border-slate-800 fixed bottom-0 z-40 flex justify-around py-2 px-3">
+    <button id="navBtnArcade" class="flex flex-col items-center text-amber-400 font-bold text-[10px] space-y-1 transition">
       <i class="fa-solid fa-gamepad text-base"></i>
-      <span>গেম</span>
+      <span>আর্কেড</span>
     </button>
     <button id="navBtnWallet" class="flex flex-col items-center text-slate-400 hover:text-amber-400 font-semibold text-[10px] space-y-1 transition">
       <i class="fa-solid fa-wallet text-base"></i>
@@ -309,7 +586,7 @@
     </button>
   </nav>
 
-  <!-- Custom Alert / Toast Notification -->
+  <!-- ================= TOAST NOTIFICATION ================= -->
   <div id="customToast" class="fixed top-14 z-50 transform -translate-y-20 opacity-0 pointer-events-none transition-all duration-300 w-11/12 max-w-sm bg-slate-800 border border-slate-700 text-white p-3 rounded-xl shadow-2xl flex items-center space-x-2.5">
     <div id="toastIconContainer" class="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-xs">
       <i id="toastIcon" class="fa-solid fa-check"></i>
@@ -317,17 +594,21 @@
     <span id="toastMessage" class="text-xs font-semibold text-slate-200">সফল হয়েছে</span>
   </div>
 
-  <!-- JavaScript Engine -->
+  <!-- ================= APPLICATION JAVASCRIPT ================= -->
   <script>
-    // App & User State
+    // Global Application State
     const AppState = {
       coins: parseInt(localStorage.getItem('flappy_coins') || '2500'),
       soundEnabled: localStorage.getItem('flappy_sound') !== 'false',
       tgUser: { id: 'demo_user', first_name: 'টেলিগ্রাম প্লেয়ার' },
-      reviveUsedInSession: false,
-      gameSessionStart: 0,
       withdrawHistory: JSON.parse(localStorage.getItem('flappy_withdrawals') || '[]'),
-      activeTab: 'game',
+      activeTab: 'arcade',
+      activeGame: null,
+      
+      // Game specific limits
+      spinsLeft: parseInt(localStorage.getItem('spin_count') || '3'),
+      scratchesLeft: parseInt(localStorage.getItem('scratch_count') || '2'),
+      lastDailyClaim: localStorage.getItem('last_daily_claim') || '',
       adPreloaded: false
     };
 
@@ -344,7 +625,7 @@
       }
     }
 
-    // UI Helper: Toast notification
+    // UI Helper: Toast
     function showToast(message, type = 'success') {
       const toast = document.getElementById('customToast');
       const toastMsg = document.getElementById('toastMessage');
@@ -366,7 +647,7 @@
       setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
         toast.classList.add('opacity-0', '-translate-y-20', 'pointer-events-none');
-      }, 3500);
+      }, 3200);
     }
 
     // Balance update
@@ -379,8 +660,41 @@
       localStorage.setItem('flappy_coins', AppState.coins.toString());
     }
 
+    // Web Audio Engine
+    const AudioEngine = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      },
+      playTone(freq, type, duration, ramp = null) {
+        if (!AppState.soundEnabled) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          if (ramp) osc.frequency.exponentialRampToValueAtTime(ramp, this.ctx.currentTime + duration);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      },
+      playJump() { this.playTone(320, 'sine', 0.12, 620); },
+      playCoin() { this.playTone(987, 'triangle', 0.2, 1318); },
+      playHit() { this.playTone(220, 'sawtooth', 0.2, 60); },
+      playWin() { this.playTone(523.25, 'triangle', 0.35, 1046.50); }
+    };
+
     // ==========================================
-    // Monetag SDK Preload & Diagnostic Handler
+    // Monetag SDK Preload & Execution
     // ==========================================
     function checkAndPreloadAd() {
       const dot = document.getElementById('adStatusDot');
@@ -391,62 +705,42 @@
         dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1';
         text.className = 'text-emerald-400';
         text.textContent = 'Ad SDK সক্রিয় (11884798)';
-        
-        diag.innerHTML = `🟢 <b>SDK কানেক্টেড:</b> লাইভ ফাংশন পাওয়া গেছে। ব্যাকগ্রাউন্ডে প্রি-লোড করা হচ্ছে...`;
+        diag.innerHTML = `🟢 <b>SDK কানেক্টেড:</b> লাইভ ফাংশন প্রস্তুত। ব্যাকগ্রাউন্ডে প্রি-লোড হচ্ছে...`;
 
-        // Monetag Official Preload trigger
         window.show_11884798({ type: 'preload' })
           .then(() => {
             AppState.adPreloaded = true;
-            diag.innerHTML = `🟢 <b>SDK স্ট্যাটাস:</b> অ্যাড সফলভাবে প্রি-লোড হয়েছে। যেকোনো সময় প্লে হবে।`;
-            console.log('Monetag: Preload success');
+            diag.innerHTML = `🟢 <b>SDK স্ট্যাটাস:</b> অ্যাড প্রি-লোড সম্পূর্ণ হয়েছে।`;
           })
           .catch((err) => {
-            console.warn('Monetag Preload Feed empty or busy:', err);
-            diag.innerHTML = `🟡 <b>SDK প্রস্তুত:</b> তবে তাৎক্ষণিক ইনভেন্টরি ফিড খালি। বাটনে ক্লিক করলে লাইভ কল হবে। (${err?.message || 'Empty feed'})`;
+            diag.innerHTML = `🟡 <b>SDK প্রস্তুত:</b> ইনভেন্টরি ফিড খালি থাকলে লাইভ কল হবে (${err?.message || 'Ready'}).`;
           });
       } else {
         dot.className = 'w-1.5 h-1.5 rounded-full bg-rose-500 mr-1';
         text.className = 'text-rose-400';
         text.textContent = 'Ad ব্লকড বা লোড হয়নি';
-        diag.innerHTML = `🔴 <b>সমস্যা শনাক্ত:</b> <code>libtl.com</code> স্ক্রিপ্টটি লোড হয়নি।<br>• আপনার ফোনে কি <b>AdBlocker</b> বা <b>Private DNS</b> (যেমন AdGuard) চালু আছে?<br>• Monetag ড্যাশবোর্ডে Zone 11884798 সক্রিয় কি না চেক করুন।`;
+        diag.innerHTML = `🔴 <b>সমস্যা:</b> <code>libtl.com</code> লোড হয়নি। আপনার ফোনে AdBlocker বা Private DNS চালু আছে কি না পরীক্ষা করুন।`;
       }
     }
 
-    // Trigger Ad with Official SDK & Fail-safe Handling
     function triggerOfficialMonetagAd(callback) {
       if (typeof window.show_11884798 === 'function') {
-        showToast('বিজ্ঞাপন ওপেন হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...', 'success');
+        showToast('বিজ্ঞাপন ওপেন হচ্ছে, অপেক্ষা করুন...', 'success');
 
-        // Official Rewarded Interstitial Execution with catchIfNoFeed
         window.show_11884798({ type: 'end', catchIfNoFeed: true })
-          .then((res) => {
-            // Success reward
+          .then(() => {
             callback(true);
-            // Preload next ad in background
             setTimeout(checkAndPreloadAd, 3000);
           })
           .catch((err) => {
-            console.error('Monetag Ad Error / Closed early:', err);
-            showToast('অ্যাড ফিড খালি বা বন্ধ করা হয়েছে: ' + (err?.message || 'No Feed'), 'error');
-            
-            // Allow manual testing alert if ad network has temporary no-fill in testing region
+            showToast('অ্যাড ফিড খালি বা ক্লোজ করা হয়েছে: ' + (err?.message || 'Empty'), 'error');
             const fallbackConfirm = confirm("Monetag নেটওয়ার্কে এই মুহূর্তে আপনার ডিভাইসে অ্যাড ইনভেন্টরি খালি রয়েছে।\n\nআপনি কি টেস্ট মোডে রিওয়ার্ড আনলক করতে চান?");
-            if (fallbackConfirm) {
-              callback(true);
-            } else {
-              callback(false);
-            }
+            callback(fallbackConfirm);
           });
       } else {
-        // SDK script failed to load (DNS blocked, adblocker, or network issue)
         showToast('AdBlocker বা DNS ব্লক থাকায় SDK লোড হতে পারেনি!', 'error');
-        const confirmTesting = confirm("[AdBlock / Private DNS সনাক্ত হয়েছে]\n\nআপনার ডিভাইসে AdBlocker বা Private DNS চালু থাকায় অ্যাড স্ক্রিপ্ট লোড হয়নি।\n\nপরীক্ষামূলকভাবে রিওয়ার্ড টেস্ট করতে 'OK' চাপুন।");
-        if (confirmTesting) {
-          callback(true);
-        } else {
-          callback(false);
-        }
+        const confirmTesting = confirm("[AdBlock / Private DNS সনাক্ত]\n\nআপনার ডিভাইসে AdBlocker থাকায় স্ক্রিপ্ট লোড হয়নি।\n\nপরীক্ষামূলকভাবে রিওয়ার্ড টেস্ট করতে 'OK' চাপুন।");
+        callback(confirmTesting);
       }
     }
 
@@ -456,107 +750,101 @@
       checkAndPreloadAd();
     });
 
-    // Web Audio Synthesizer
-    const AudioEngine = {
-      ctx: null,
-      init() {
-        if (!this.ctx) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          this.ctx = new AudioContext();
-        }
-        if (this.ctx && this.ctx.state === 'suspended') {
-          this.ctx.resume();
-        }
-      },
-      playJump() {
-        if (!AppState.soundEnabled) return;
-        this.init();
-        try {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(320, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(620, this.ctx.currentTime + 0.12);
-          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start();
-          osc.stop(this.ctx.currentTime + 0.12);
-        } catch (e) {}
-      },
-      playCoin() {
-        if (!AppState.soundEnabled) return;
-        this.init();
-        try {
-          const now = this.ctx.currentTime;
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(987.77, now);
-          osc.frequency.setValueAtTime(1318.51, now + 0.08);
-          gain.gain.setValueAtTime(0.25, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.25);
-        } catch (e) {}
-      },
-      playHit() {
-        if (!AppState.soundEnabled) return;
-        this.init();
-        try {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.2);
-          gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start();
-          osc.stop(this.ctx.currentTime + 0.2);
-        } catch (e) {}
-      }
-    };
-
-    // Canvas Setup
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * (window.devicePixelRatio || 1);
-      canvas.height = rect.height * (window.devicePixelRatio || 1);
-      ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+    // ==========================================
+    // Daily Login Bonus
+    // ==========================================
+    const todayStr = new Date().toDateString();
+    if (AppState.lastDailyClaim === todayStr) {
+      document.getElementById('dailyBonusStatus').textContent = 'আজকের রিওয়ার্ড গ্রহণ করা হয়েছে ✅';
+      document.getElementById('btnClaimDaily').classList.add('opacity-50', 'pointer-events-none');
+      document.getElementById('btnClaimDaily').textContent = 'সংগৃহীত';
     }
-    window.addEventListener('resize', resizeCanvas);
 
-    // Flappy Game Engine
-    const Game = {
+    document.getElementById('btnClaimDaily').addEventListener('click', () => {
+      AppState.coins += 100;
+      AppState.lastDailyClaim = todayStr;
+      localStorage.setItem('last_daily_claim', todayStr);
+      updateBalances();
+      AudioEngine.playCoin();
+      document.getElementById('dailyBonusStatus').textContent = 'আজকের রিওয়ার্ড গ্রহণ করা হয়েছে ✅';
+      document.getElementById('btnClaimDaily').classList.add('opacity-50', 'pointer-events-none');
+      document.getElementById('btnClaimDaily').textContent = 'সংগৃহীত';
+      showToast('দৈনিক বোনাস ১০০ কয়েন যোগ হয়েছে!', 'success');
+    });
+
+    // ==========================================
+    // Arcade Navigation & Game View Switches
+    // ==========================================
+    const viewLobby = document.getElementById('viewLobby');
+    const gameFlappyView = document.getElementById('gameFlappyView');
+    const gameSpinView = document.getElementById('gameSpinView');
+    const gameScratchView = document.getElementById('gameScratchView');
+    const gameQuizView = document.getElementById('gameQuizView');
+    const gameKnifeView = document.getElementById('gameKnifeView');
+
+    function openGame(gameType) {
+      viewLobby.classList.add('hidden');
+      [gameFlappyView, gameSpinView, gameScratchView, gameQuizView, gameKnifeView].forEach(v => v.classList.add('hidden'));
+      AppState.activeGame = gameType;
+
+      if (gameType === 'flappy') {
+        gameFlappyView.classList.remove('hidden');
+        resizeFlappyCanvas();
+      } else if (gameType === 'spin') {
+        gameSpinView.classList.remove('hidden');
+        renderWheel();
+      } else if (gameType === 'scratch') {
+        gameScratchView.classList.remove('hidden');
+        initScratchCard();
+      } else if (gameType === 'quiz') {
+        gameQuizView.classList.remove('hidden');
+        startQuizSession();
+      } else if (gameType === 'knife') {
+        gameKnifeView.classList.remove('hidden');
+        resizeKnifeCanvas();
+      }
+    }
+
+    function backToLobby() {
+      // Pause any ongoing canvas games
+      FlappyEngine.active = false;
+      KnifeEngine.active = false;
+      clearInterval(QuizEngine.timerInterval);
+
+      [gameFlappyView, gameSpinView, gameScratchView, gameQuizView, gameKnifeView].forEach(v => v.classList.add('hidden'));
+      viewLobby.classList.remove('hidden');
+      AppState.activeGame = null;
+    }
+
+    // ==========================================
+    // GAME 1: FLAPPY CASH ENGINE
+    // ==========================================
+    const flappyCanvas = document.getElementById('flappyCanvas');
+    const flappyCtx = flappyCanvas.getContext('2d');
+
+    function resizeFlappyCanvas() {
+      const rect = flappyCanvas.getBoundingClientRect();
+      flappyCanvas.width = rect.width * (window.devicePixelRatio || 1);
+      flappyCanvas.height = rect.height * (window.devicePixelRatio || 1);
+      flappyCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+    }
+
+    const FlappyEngine = {
       active: false,
       score: 0,
       sessionCoins: 0,
       gravity: 0.38,
       speed: 2.2,
-      bird: {
-        x: 60,
-        y: 200,
-        vy: 0,
-        radius: 14,
-        jumpPower: -6.4,
-        rotation: 0
-      },
+      bird: { x: 50, y: 180, vy: 0, radius: 13, jumpPower: -6.2, rotation: 0 },
       pipes: [],
       coinsInWorld: [],
       particles: [],
       spawnTimer: 0,
+      reviveUsed: false,
 
       reset(keepScore = false) {
-        const h = canvas.getBoundingClientRect().height;
-        this.bird.x = 60;
+        const h = flappyCanvas.getBoundingClientRect().height || 400;
+        this.bird.x = 50;
         this.bird.y = h / 2;
         this.bird.vy = 0;
         this.bird.rotation = 0;
@@ -567,25 +855,21 @@
         if (!keepScore) {
           this.score = 0;
           this.sessionCoins = 0;
-          AppState.reviveUsedInSession = false;
-          AppState.gameSessionStart = Date.now();
+          this.reviveUsed = false;
         }
-        document.getElementById('currentScore').textContent = this.score;
-        document.getElementById('sessionCoins').textContent = this.sessionCoins;
+        document.getElementById('flappyScoreText').textContent = this.score;
+        document.getElementById('flappyCoinText').textContent = this.sessionCoins;
       },
 
       jump() {
         if (!this.active) return;
         this.bird.vy = this.bird.jumpPower;
         AudioEngine.playJump();
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
       },
 
       update() {
         if (!this.active) return;
-        const rect = canvas.getBoundingClientRect();
+        const rect = flappyCanvas.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
 
@@ -593,7 +877,7 @@
         this.bird.y += this.bird.vy;
         this.bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.bird.vy * 0.08)));
 
-        if (this.bird.y + this.bird.radius >= height - 25 || this.bird.y - this.bird.radius <= 0) {
+        if (this.bird.y + this.bird.radius >= height - 20 || this.bird.y - this.bird.radius <= 0) {
           this.gameOver();
           return;
         }
@@ -601,27 +885,22 @@
         this.spawnTimer++;
         if (this.spawnTimer > 105) {
           this.spawnTimer = 0;
-          const pipeGap = 125;
-          const minPipeH = 50;
-          const maxPipeH = height - pipeGap - minPipeH - 40;
-          const topH = Math.floor(Math.random() * (maxPipeH - minPipeH + 1)) + minPipeH;
+          const pipeGap = 120;
+          const minH = 40;
+          const maxH = height - pipeGap - minH - 30;
+          const topH = Math.floor(Math.random() * (maxH - minH + 1)) + minH;
 
           this.pipes.push({
             x: width,
             topH: topH,
             bottomY: topH + pipeGap,
             bottomH: height - (topH + pipeGap) - 20,
-            width: 52,
+            width: 48,
             passed: false
           });
 
-          if (Math.random() > 0.35) {
-            this.coinsInWorld.push({
-              x: width + 26,
-              y: topH + pipeGap / 2,
-              radius: 9,
-              collected: false
-            });
+          if (Math.random() > 0.4) {
+            this.coinsInWorld.push({ x: width + 24, y: topH + pipeGap / 2, radius: 8, collected: false });
           }
         }
 
@@ -633,8 +912,8 @@
             p.passed = true;
             this.score++;
             this.sessionCoins += 5;
-            document.getElementById('currentScore').textContent = this.score;
-            document.getElementById('sessionCoins').textContent = this.sessionCoins;
+            document.getElementById('flappyScoreText').textContent = this.score;
+            document.getElementById('flappyCoinText').textContent = this.sessionCoins;
             AudioEngine.playCoin();
           }
 
@@ -649,147 +928,102 @@
             }
           }
 
-          if (p.x + p.width < -10) {
-            this.pipes.splice(i, 1);
-          }
+          if (p.x + p.width < -10) this.pipes.splice(i, 1);
         }
 
         for (let i = this.coinsInWorld.length - 1; i >= 0; i--) {
           const c = this.coinsInWorld[i];
           c.x -= this.speed;
-
-          const dx = this.bird.x - c.x;
-          const dy = this.bird.y - c.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dist = Math.hypot(this.bird.x - c.x, this.bird.y - c.y);
 
           if (!c.collected && dist < this.bird.radius + c.radius) {
             c.collected = true;
             this.sessionCoins += 20;
-            document.getElementById('sessionCoins').textContent = this.sessionCoins;
+            document.getElementById('flappyCoinText').textContent = this.sessionCoins;
             AudioEngine.playCoin();
-            for (let k = 0; k < 6; k++) {
-              this.particles.push({
-                x: c.x,
-                y: c.y,
-                vx: (Math.random() - 0.5) * 4,
-                vy: (Math.random() - 0.5) * 4,
-                life: 25,
-                color: '#facc15'
-              });
-            }
           }
-
-          if (c.x < -10 || c.collected) {
-            this.coinsInWorld.splice(i, 1);
-          }
-        }
-
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-          const pt = this.particles[i];
-          pt.x += pt.vx;
-          pt.y += pt.vy;
-          pt.life--;
-          if (pt.life <= 0) this.particles.splice(i, 1);
+          if (c.x < -10 || c.collected) this.coinsInWorld.splice(i, 1);
         }
       },
 
       render() {
-        const rect = canvas.getBoundingClientRect();
+        const rect = flappyCanvas.getBoundingClientRect();
         const width = rect.width;
         const height = rect.height;
 
-        const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
+        // Sky
+        const skyGradient = flappyCtx.createLinearGradient(0, 0, 0, height);
         skyGradient.addColorStop(0, '#0284c7');
-        skyGradient.addColorStop(0.7, '#38bdf8');
+        skyGradient.addColorStop(0.8, '#38bdf8');
         skyGradient.addColorStop(1, '#bae6fd');
-        ctx.fillStyle = skyGradient;
-        ctx.fillRect(0, 0, width, height);
+        flappyCtx.fillStyle = skyGradient;
+        flappyCtx.fillRect(0, 0, width, height);
 
-        ctx.fillStyle = '#15803d';
-        ctx.fillRect(0, height - 25, width, 8);
-        ctx.fillStyle = '#854d0e';
-        ctx.fillRect(0, height - 17, width, 17);
+        // Ground
+        flappyCtx.fillStyle = '#15803d';
+        flappyCtx.fillRect(0, height - 20, width, 6);
+        flappyCtx.fillStyle = '#78350f';
+        flappyCtx.fillRect(0, height - 14, width, 14);
 
+        // Pipes
         for (const p of this.pipes) {
-          ctx.fillStyle = '#22c55e';
-          ctx.fillRect(p.x, 0, p.width, p.topH);
-          ctx.fillStyle = '#16a34a';
-          ctx.fillRect(p.x - 3, p.topH - 16, p.width + 6, 16);
-
-          ctx.fillStyle = '#22c55e';
-          ctx.fillRect(p.x, p.bottomY, p.width, p.bottomH);
-          ctx.fillStyle = '#16a34a';
-          ctx.fillRect(p.x - 3, p.bottomY, p.width + 6, 16);
+          flappyCtx.fillStyle = '#22c55e';
+          flappyCtx.fillRect(p.x, 0, p.width, p.topH);
+          flappyCtx.fillRect(p.x, p.bottomY, p.width, p.bottomH);
+          flappyCtx.fillStyle = '#16a34a';
+          flappyCtx.fillRect(p.x - 2, p.topH - 12, p.width + 4, 12);
+          flappyCtx.fillRect(p.x - 2, p.bottomY, p.width + 4, 12);
         }
 
+        // Coins
         for (const c of this.coinsInWorld) {
-          ctx.beginPath();
-          ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
-          ctx.fillStyle = '#eab308';
-          ctx.fill();
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = '#fef08a';
-          ctx.stroke();
-          ctx.fillStyle = '#713f12';
-          ctx.font = 'bold 9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('৳', c.x, c.y);
+          flappyCtx.beginPath();
+          flappyCtx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+          flappyCtx.fillStyle = '#eab308';
+          flappyCtx.fill();
+          flappyCtx.lineWidth = 1.5;
+          flappyCtx.strokeStyle = '#fef08a';
+          flappyCtx.stroke();
         }
 
-        for (const pt of this.particles) {
-          ctx.fillStyle = pt.color;
-          ctx.fillRect(pt.x, pt.y, 3, 3);
-        }
+        // Bird
+        flappyCtx.save();
+        flappyCtx.translate(this.bird.x, this.bird.y);
+        flappyCtx.rotate(this.bird.rotation);
+        flappyCtx.beginPath();
+        flappyCtx.arc(0, 0, this.bird.radius, 0, Math.PI * 2);
+        flappyCtx.fillStyle = '#f59e0b';
+        flappyCtx.fill();
+        flappyCtx.lineWidth = 2;
+        flappyCtx.strokeStyle = '#b45309';
+        flappyCtx.stroke();
 
-        ctx.save();
-        ctx.translate(this.bird.x, this.bird.y);
-        ctx.rotate(this.bird.rotation);
-
-        ctx.beginPath();
-        ctx.arc(0, 0, this.bird.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#f59e0b';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#b45309';
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(6, -4, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(8, -4, 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#000000';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(10, 0);
-        ctx.lineTo(20, 3);
-        ctx.lineTo(10, 7);
-        ctx.fillStyle = '#f97316';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.ellipse(-5, 3, 7, 4, -0.2, 0, Math.PI * 2);
-        ctx.fillStyle = '#fde68a';
-        ctx.fill();
-
-        ctx.restore();
+        // Eye & Beak
+        flappyCtx.beginPath();
+        flappyCtx.arc(5, -3, 3, 0, Math.PI * 2);
+        flappyCtx.fillStyle = '#fff';
+        flappyCtx.fill();
+        flappyCtx.beginPath();
+        flappyCtx.arc(6, -3, 1.5, 0, Math.PI * 2);
+        flappyCtx.fillStyle = '#000';
+        flappyCtx.fill();
+        flappyCtx.beginPath();
+        flappyCtx.moveTo(8, 0);
+        flappyCtx.lineTo(16, 2);
+        flappyCtx.lineTo(8, 6);
+        flappyCtx.fillStyle = '#f97316';
+        flappyCtx.fill();
+        flappyCtx.restore();
       },
 
       gameOver() {
         this.active = false;
         AudioEngine.playHit();
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
-        }
+        document.getElementById('finalFlappyScore').textContent = this.score;
+        document.getElementById('finalFlappyCoins').textContent = `+${this.sessionCoins}`;
 
-        document.getElementById('finalScoreText').textContent = this.score;
-        document.getElementById('finalCoinsText').textContent = `+${this.sessionCoins}`;
-
-        const reviveBtn = document.getElementById('btnReviveAd');
-        if (AppState.reviveUsedInSession) {
+        const reviveBtn = document.getElementById('btnFlappyRevive');
+        if (this.reviveUsed) {
           reviveBtn.classList.add('opacity-50', 'pointer-events-none');
           reviveBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span>রিভাইভ লিমিট শেষ</span>';
         } else {
@@ -797,77 +1031,618 @@
           reviveBtn.innerHTML = '<i class="fa-solid fa-video text-amber-300"></i> <span>অ্যাড দেখে রিভাইভ করুন (১ বার)</span>';
         }
 
-        document.getElementById('gameOverModal').classList.remove('hidden');
-        document.getElementById('gameOverModal').classList.add('flex');
+        document.getElementById('flappyOverModal').classList.remove('hidden');
+        document.getElementById('flappyOverModal').classList.add('flex');
       }
     };
 
-    function gameLoop() {
-      Game.update();
-      Game.render();
-      requestAnimationFrame(gameLoop);
+    function flappyLoop() {
+      FlappyEngine.update();
+      FlappyEngine.render();
+      if (AppState.activeGame === 'flappy') requestAnimationFrame(flappyLoop);
     }
 
-    canvas.addEventListener('pointerdown', (e) => {
+    flappyCanvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      Game.jump();
+      FlappyEngine.jump();
     });
 
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        Game.jump();
+    document.getElementById('btnStartFlappy').addEventListener('click', () => {
+      AudioEngine.init();
+      resizeFlappyCanvas();
+      document.getElementById('flappyStartModal').classList.add('hidden');
+      FlappyEngine.reset();
+      FlappyEngine.active = true;
+      flappyLoop();
+    });
+
+    document.getElementById('btnFlappyRevive').addEventListener('click', () => {
+      triggerOfficialMonetagAd((success) => {
+        if (success) {
+          FlappyEngine.reviveUsed = true;
+          document.getElementById('flappyOverModal').classList.remove('flex');
+          document.getElementById('flappyOverModal').classList.add('hidden');
+          FlappyEngine.bird.y = flappyCanvas.getBoundingClientRect().height / 2;
+          FlappyEngine.bird.vy = 0;
+          FlappyEngine.pipes = FlappyEngine.pipes.filter(p => p.x > FlappyEngine.bird.x + 100);
+          FlappyEngine.active = true;
+          flappyLoop();
+          showToast('রিভাইভ সফল হয়েছে!', 'success');
+        }
+      });
+    });
+
+    document.getElementById('btnFlappy2X').addEventListener('click', () => {
+      triggerOfficialMonetagAd((success) => {
+        if (success) {
+          FlappyEngine.sessionCoins *= 2;
+          document.getElementById('finalFlappyCoins').textContent = `+${FlappyEngine.sessionCoins} (2X)`;
+          document.getElementById('btnFlappy2X').classList.add('opacity-50', 'pointer-events-none');
+          showToast('কয়েন দ্বিগুণ (2X) হয়েছে!', 'success');
+        }
+      });
+    });
+
+    document.getElementById('btnFlappyRestart').addEventListener('click', () => {
+      AppState.coins += FlappyEngine.sessionCoins;
+      updateBalances();
+      document.getElementById('flappyOverModal').classList.remove('flex');
+      document.getElementById('flappyOverModal').classList.add('hidden');
+      FlappyEngine.reset();
+      FlappyEngine.active = true;
+      flappyLoop();
+    });
+
+    // ==========================================
+    // GAME 2: LUCKY SPIN WHEEL
+    // ==========================================
+    const wheelCanvas = document.getElementById('wheelCanvas');
+    const wheelCtx = wheelCanvas.getContext('2d');
+    const wheelSegments = [
+      { text: '50 🪙', val: 50, color: '#f59e0b' },
+      { text: '100 🪙', val: 100, color: '#3b82f6' },
+      { text: '20 🪙', val: 20, color: '#10b981' },
+      { text: '500 🌟', val: 500, color: '#8b5cf6' },
+      { text: '80 🪙', val: 80, color: '#ec4899' },
+      { text: '1000 👑', val: 1000, color: '#f97316' },
+      { text: '30 🪙', val: 30, color: '#06b6d4' },
+      { text: '250 💎', val: 250, color: '#14b8a6' }
+    ];
+
+    let currentAngle = 0;
+    let isSpinning = false;
+
+    function renderWheel() {
+      const numSegments = wheelSegments.length;
+      const arcSize = (2 * Math.PI) / numSegments;
+      const radius = wheelCanvas.width / 2;
+
+      wheelCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+
+      for (let i = 0; i < numSegments; i++) {
+        const angle = currentAngle + i * arcSize;
+        wheelCtx.beginPath();
+        wheelCtx.fillStyle = wheelSegments[i].color;
+        wheelCtx.moveTo(radius, radius);
+        wheelCtx.arc(radius, radius, radius - 4, angle, angle + arcSize);
+        wheelCtx.lineTo(radius, radius);
+        wheelCtx.fill();
+        wheelCtx.stroke();
+
+        // Label
+        wheelCtx.save();
+        wheelCtx.translate(radius, radius);
+        wheelCtx.rotate(angle + arcSize / 2);
+        wheelCtx.textAlign = 'right';
+        wheelCtx.fillStyle = '#ffffff';
+        wheelCtx.font = 'bold 12px sans-serif';
+        wheelCtx.fillText(wheelSegments[i].text, radius - 16, 5);
+        wheelCtx.restore();
+      }
+    }
+
+    document.getElementById('spinCountDisplay').textContent = AppState.spinsLeft;
+    document.getElementById('spinLeftBadge').textContent = `${AppState.spinsLeft} স্পিন বাকি`;
+
+    document.getElementById('btnSpinNow').addEventListener('click', () => {
+      if (isSpinning) return;
+      if (AppState.spinsLeft <= 0) {
+        showToast('ফ্রি স্পিন শেষ! অ্যাড দেখে স্পিন আনলক করুন।', 'error');
+        return;
+      }
+
+      AppState.spinsLeft--;
+      localStorage.setItem('spin_count', AppState.spinsLeft);
+      document.getElementById('spinCountDisplay').textContent = AppState.spinsLeft;
+      document.getElementById('spinLeftBadge').textContent = `${AppState.spinsLeft} স্পিন বাকি`;
+
+      isSpinning = true;
+      AudioEngine.init();
+
+      // Spin physics
+      const spinRotations = 5 + Math.random() * 4;
+      const targetDelta = spinRotations * 2 * Math.PI;
+      const duration = 4000;
+      const startTime = performance.now();
+      const initialAngle = currentAngle;
+
+      function animateSpin(now) {
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - t, 3);
+
+        currentAngle = initialAngle + targetDelta * easeOut;
+        renderWheel();
+
+        if (t < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          isSpinning = false;
+          // Determine winning segment at 270 degrees (pointer is at top)
+          const numSegments = wheelSegments.length;
+          const arcSize = (2 * Math.PI) / numSegments;
+          const normalizedAngle = (2 * Math.PI - (currentAngle % (2 * Math.PI))) % (2 * Math.PI);
+          const pointerAngle = (normalizedAngle + 1.5 * Math.PI) % (2 * Math.PI);
+          const winningIdx = Math.floor(pointerAngle / arcSize);
+          const winPrize = wheelSegments[winningIdx];
+
+          AppState.coins += winPrize.val;
+          updateBalances();
+          AudioEngine.playWin();
+          showToast(`অভিনন্দন! আপনি জিতেছেন ${winPrize.text}`, 'success');
+        }
+      }
+      requestAnimationFrame(animateSpin);
+    });
+
+    document.getElementById('btnAddSpinsAd').addEventListener('click', () => {
+      triggerOfficialMonetagAd((success) => {
+        if (success) {
+          AppState.spinsLeft += 2;
+          localStorage.setItem('spin_count', AppState.spinsLeft);
+          document.getElementById('spinCountDisplay').textContent = AppState.spinsLeft;
+          document.getElementById('spinLeftBadge').textContent = `${AppState.spinsLeft} স্পিন বাকি`;
+          showToast('২টি অতিরিক্ত স্পিন আনলক হয়েছে!', 'success');
+        }
+      });
+    });
+
+    // ==========================================
+    // GAME 3: GOLDEN SCRATCH CARD ENGINE
+    // ==========================================
+    const scratchCanvas = document.getElementById('scratchCanvas');
+    const scratchCtx = scratchCanvas.getContext('2d');
+    let currentScratchPrize = 100;
+    let isScratching = false;
+    let scratchedPixels = 0;
+    let scratchClaimed = false;
+
+    function initScratchCard() {
+      scratchClaimed = false;
+      document.getElementById('btnClaimScratch').classList.add('hidden');
+      document.getElementById('scratchCountDisplay').textContent = AppState.scratchesLeft;
+      document.getElementById('scratchLeftBadge').textContent = `${AppState.scratchesLeft} কার্ড বাকি`;
+
+      // Set random prize
+      const prizes = [80, 120, 150, 200, 300, 500];
+      currentScratchPrize = prizes[Math.floor(Math.random() * prizes.length)];
+      document.getElementById('scratchAmountText').textContent = `+${currentScratchPrize} কয়েন`;
+
+      // Fill canvas with gold scratch foil
+      scratchCtx.globalCompositeOperation = 'source-over';
+      const grad = scratchCtx.createLinearGradient(0, 0, scratchCanvas.width, scratchCanvas.height);
+      grad.addColorStop(0, '#d97706');
+      grad.addColorStop(0.5, '#fde68a');
+      grad.addColorStop(1, '#b45309');
+      scratchCtx.fillStyle = grad;
+      scratchCtx.fillRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+
+      scratchCtx.fillStyle = '#78350f';
+      scratchCtx.font = 'bold 15px sans-serif';
+      scratchCtx.textAlign = 'center';
+      scratchCtx.fillText('★ ঘষে পুরস্কার জিতুন ★', scratchCanvas.width / 2, scratchCanvas.height / 2 + 5);
+
+      scratchedPixels = 0;
+    }
+
+    function scratchAt(x, y) {
+      if (scratchClaimed || AppState.scratchesLeft <= 0) return;
+      scratchCtx.globalCompositeOperation = 'destination-out';
+      scratchCtx.beginPath();
+      scratchCtx.arc(x, y, 16, 0, Math.PI * 2);
+      scratchCtx.fill();
+
+      scratchedPixels++;
+      if (scratchedPixels > 40 && !scratchClaimed) {
+        document.getElementById('btnClaimScratch').classList.remove('hidden');
+      }
+    }
+
+    function getCanvasCoords(e) {
+      const rect = scratchCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (scratchCanvas.width / rect.width),
+        y: (clientY - rect.top) * (scratchCanvas.height / rect.height)
+      };
+    }
+
+    scratchCanvas.addEventListener('mousedown', (e) => { isScratching = true; const c = getCanvasCoords(e); scratchAt(c.x, c.y); });
+    scratchCanvas.addEventListener('mousemove', (e) => { if (isScratching) { const c = getCanvasCoords(e); scratchAt(c.x, c.y); } });
+    window.addEventListener('mouseup', () => { isScratching = false; });
+
+    scratchCanvas.addEventListener('touchstart', (e) => { isScratching = true; const c = getCanvasCoords(e); scratchAt(c.x, c.y); }, { passive: true });
+    scratchCanvas.addEventListener('touchmove', (e) => { if (isScratching) { const c = getCanvasCoords(e); scratchAt(c.x, c.y); } }, { passive: true });
+    scratchCanvas.addEventListener('touchend', () => { isScratching = false; });
+
+    document.getElementById('btnClaimScratch').addEventListener('click', () => {
+      if (scratchClaimed) return;
+      scratchClaimed = true;
+      AppState.scratchesLeft--;
+      AppState.coins += currentScratchPrize;
+      localStorage.setItem('scratch_count', AppState.scratchesLeft);
+      updateBalances();
+      AudioEngine.playWin();
+      showToast(`+${currentScratchPrize} কয়েন সফলভাবে যোগ হয়েছে!`, 'success');
+      document.getElementById('btnClaimScratch').classList.add('hidden');
+      document.getElementById('scratchCountDisplay').textContent = AppState.scratchesLeft;
+      document.getElementById('scratchLeftBadge').textContent = `${AppState.scratchesLeft} কার্ড বাকি`;
+    });
+
+    document.getElementById('btnAddScratchAd').addEventListener('click', () => {
+      triggerOfficialMonetagAd((success) => {
+        if (success) {
+          AppState.scratchesLeft += 2;
+          localStorage.setItem('scratch_count', AppState.scratchesLeft);
+          initScratchCard();
+          showToast('২টি নতুন কার্ড আনলক হয়েছে!', 'success');
+        }
+      });
+    });
+
+    // ==========================================
+    // GAME 4: TALENT QUIZ ENGINE
+    // ==========================================
+    const QuizEngine = {
+      questions: [
+        { q: "বাংলাদেশের জাতীয় খেলা কোনটি?", options: ["ক্রিকেট", "হা-ডু-ডু / কাবাডি", "ফুটবল", "ব্যাডমিন্টন"], answer: 1 },
+        { q: "সূর্যোদয়ের দেশ বলা হয় কোন দেশকে?", options: ["চীন", "জাপান", "নরওয়ে", "থাইল্যান্ড"], answer: 1 },
+        { q: "পদ্মা সেতুর দৈর্ঘ্য কত কিলোমিটার?", options: ["৬.১৫ কিমি", "৫.৮০ কিমি", "৭.২০ কিমি", "৬.৮০ কিমি"], answer: 0 },
+        { q: "কম্পিউটারের মস্তিষ্ক কাকে বলা হয়?", options: ["RAM", "Hard Disk", "CPU", "Monitor"], answer: 2 },
+        { q: "টেলিগ্রাম অ্যাপটি কত সালে চালু হয়?", options: ["২০১০", "২০১৩", "২০১৫", "২০১৮"], answer: 1 },
+        { q: "পৃথিবীর সবচেয়ে বড় মহাসাগর কোনটি?", options: ["ভারত মহাসাগর", "আটলান্টিক", "প্রশান্ত মহাসাগর", "উত্তর মহাসাগর"], answer: 2 }
+      ],
+      currentIndex: 0,
+      timer: 15,
+      timerInterval: null,
+      lifelineUsed: false
+    };
+
+    function startQuizSession() {
+      QuizEngine.currentIndex = 0;
+      QuizEngine.lifelineUsed = false;
+      document.getElementById('btnQuizLifeline').classList.remove('opacity-50', 'pointer-events-none');
+      loadQuizQuestion();
+    }
+
+    function loadQuizQuestion() {
+      clearInterval(QuizEngine.timerInterval);
+      QuizEngine.timer = 15;
+      document.getElementById('quizTimerText').textContent = '15s';
+      document.getElementById('quizIndex').textContent = QuizEngine.currentIndex + 1;
+
+      const qObj = QuizEngine.questions[QuizEngine.currentIndex];
+      document.getElementById('quizQuestionText').textContent = qObj.q;
+
+      const container = document.getElementById('quizOptionsContainer');
+      container.innerHTML = qObj.options.map((opt, idx) => `
+        <button onclick="handleQuizAnswer(${idx})" id="quizOpt_${idx}" class="w-full p-2.5 bg-slate-900 border border-slate-700/80 hover:border-indigo-500 rounded-xl text-left text-xs font-semibold text-slate-200 transition active:scale-98 flex items-center justify-between">
+          <span>${opt}</span>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+        </button>
+      `).join('');
+
+      QuizEngine.timerInterval = setInterval(() => {
+        QuizEngine.timer--;
+        document.getElementById('quizTimerText').textContent = `${QuizEngine.timer}s`;
+        if (QuizEngine.timer <= 0) {
+          clearInterval(QuizEngine.timerInterval);
+          showToast('সময় শেষ! পরবর্তী প্রশ্ন...', 'error');
+          nextQuizQuestion();
+        }
+      }, 1000);
+    }
+
+    window.handleQuizAnswer = function(selectedIdx) {
+      clearInterval(QuizEngine.timerInterval);
+      const qObj = QuizEngine.questions[QuizEngine.currentIndex];
+      const optBtn = document.getElementById(`quizOpt_${selectedIdx}`);
+
+      if (selectedIdx === qObj.answer) {
+        optBtn.className = 'w-full p-2.5 bg-emerald-600/30 border border-emerald-500 rounded-xl text-left text-xs font-bold text-emerald-300';
+        AppState.coins += 50;
+        updateBalances();
+        AudioEngine.playCoin();
+        showToast('সঠিক উত্তর! +৫০ কয়েন', 'success');
+      } else {
+        optBtn.className = 'w-full p-2.5 bg-rose-600/30 border border-rose-500 rounded-xl text-left text-xs font-bold text-rose-300';
+        AudioEngine.playHit();
+        showToast('ভুল উত্তর!', 'error');
+      }
+
+      setTimeout(nextQuizQuestion, 1200);
+    };
+
+    function nextQuizQuestion() {
+      QuizEngine.currentIndex++;
+      if (QuizEngine.currentIndex < 5 && QuizEngine.currentIndex < QuizEngine.questions.length) {
+        loadQuizQuestion();
+      } else {
+        showToast('কুইজ রাউন্ড সম্পন্ন হয়েছে! চমৎকার খেলেছেন।', 'success');
+        setTimeout(backToLobby, 1500);
+      }
+    }
+
+    document.getElementById('btnQuizLifeline').addEventListener('click', () => {
+      triggerOfficialMonetagAd((success) => {
+        if (success) {
+          QuizEngine.lifelineUsed = true;
+          document.getElementById('btnQuizLifeline').classList.add('opacity-50', 'pointer-events-none');
+          const qObj = QuizEngine.questions[QuizEngine.currentIndex];
+          let hiddenCount = 0;
+          for (let i = 0; i < 4; i++) {
+            if (i !== qObj.answer && hiddenCount < 2) {
+              const btn = document.getElementById(`quizOpt_${i}`);
+              if (btn) btn.classList.add('hidden');
+              hiddenCount++;
+            }
+          }
+          showToast('৫০-৫০ লাইফলাইন চালু হয়েছে! ২টি ভুল অপশন সরানো হলো।', 'success');
+        }
+      });
+    });
+
+    // ==========================================
+    // GAME 5: KNIFE TARGET DASH ENGINE
+    // ==========================================
+    const knifeCanvas = document.getElementById('knifeCanvas');
+    const knifeCtx = knifeCanvas.getContext('2d');
+
+    function resizeKnifeCanvas() {
+      const rect = knifeCanvas.getBoundingClientRect();
+      knifeCanvas.width = rect.width * (window.devicePixelRatio || 1);
+      knifeCanvas.height = rect.height * (window.devicePixelRatio || 1);
+      knifeCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+    }
+
+    const KnifeEngine = {
+      active: false,
+      logAngle: 0,
+      logSpeed: 0.035,
+      knivesInLog: [],
+      knivesLeft: 5,
+      stage: 1,
+      totalScore: 0,
+      flyingKnife: null,
+
+      reset() {
+        this.logAngle = 0;
+        this.knivesInLog = [];
+        this.knivesLeft = 5;
+        this.flyingKnife = null;
+        this.active = true;
+        document.getElementById('knifeStageText').textContent = this.stage;
+        document.getElementById('knifeCountText').textContent = this.knivesLeft;
+      },
+
+      throwKnife() {
+        if (!this.active || this.flyingKnife || this.knivesLeft <= 0) return;
+        this.flyingKnife = { y: 380, speed: 18 };
+        AudioEngine.playJump();
+      },
+
+      update() {
+        if (!this.active) return;
+        this.logAngle += this.logSpeed;
+
+        if (this.flyingKnife) {
+          this.flyingKnife.y -= this.flyingKnife.speed;
+          // Target log center is around y=110, radius 45
+          if (this.flyingKnife.y <= 155) {
+            // Impact with Log
+            const impactAngle = (Math.PI / 2) - this.logAngle;
+
+            // Check collision with existing knives in log
+            for (const angle of this.knivesInLog) {
+              let diff = Math.abs(((angle - impactAngle + Math.PI) % (2 * Math.PI)) - Math.PI);
+              if (diff < 0.22) {
+                // Knife hit another knife!
+                this.gameOver();
+                return;
+              }
+            }
+
+            // Successfully stuck in log
+            this.knivesInLog.push(impactAngle);
+            this.flyingKnife = null;
+            this.knivesLeft--;
+            this.totalScore += 10;
+            AudioEngine.playCoin();
+            document.getElementById('knifeCountText').textContent = this.knivesLeft;
+
+            if (this.knivesLeft <= 0) {
+              // Level up
+              this.stage++;
+              AppState.coins += 40;
+              updateBalances();
+              showToast(`লেভেল কমপ্লিট! +৪০ কয়েন বোনাস`, 'success');
+              setTimeout(() => this.reset(), 500);
+            }
+          }
+        }
+      },
+
+      render() {
+        const rect = knifeCanvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        knifeCtx.fillStyle = '#0f172a';
+        knifeCtx.fillRect(0, 0, width, height);
+
+        const centerX = width / 2;
+        const centerY = 110;
+        const logRadius = 45;
+
+        // Render Rotating Wood Log
+        knifeCtx.save();
+        knifeCtx.translate(centerX, centerY);
+        knifeCtx.rotate(this.logAngle);
+
+        knifeCtx.beginPath();
+        knifeCtx.arc(0, 0, logRadius, 0, Math.PI * 2);
+        knifeCtx.fillStyle = '#854d0e';
+        knifeCtx.fill();
+        knifeCtx.lineWidth = 4;
+        knifeCtx.strokeStyle = '#ca8a04';
+        knifeCtx.stroke();
+
+        // Knives stuck in log
+        for (const angle of this.knivesInLog) {
+          knifeCtx.save();
+          knifeCtx.rotate(angle);
+          knifeCtx.fillStyle = '#cbd5e1';
+          knifeCtx.fillRect(-3, logRadius - 4, 6, 32);
+          knifeCtx.fillStyle = '#f97316';
+          knifeCtx.fillRect(-2, logRadius + 28, 4, 10);
+          knifeCtx.restore();
+        }
+        knifeCtx.restore();
+
+        // Flying Knife
+        if (this.flyingKnife) {
+          knifeCtx.fillStyle = '#cbd5e1';
+          knifeCtx.fillRect(centerX - 3, this.flyingKnife.y, 6, 32);
+          knifeCtx.fillStyle = '#f97316';
+          knifeCtx.fillRect(centerX - 2, this.flyingKnife.y + 32, 4, 10);
+        } else if (this.knivesLeft > 0) {
+          // Ready knife at bottom
+          knifeCtx.fillStyle = '#cbd5e1';
+          knifeCtx.fillRect(centerX - 3, 380, 6, 32);
+          knifeCtx.fillStyle = '#f97316';
+          knifeCtx.fillRect(centerX - 2, 412, 4, 10);
+        }
+      },
+
+      gameOver() {
+        this.active = false;
+        this.flyingKnife = null;
+        AudioEngine.playHit();
+        document.getElementById('finalKnifeScore').textContent = this.totalScore;
+        document.getElementById('knifeOverModal').classList.remove('hidden');
+        document.getElementById('knifeOverModal').classList.add('flex');
+      }
+    };
+
+    function knifeLoop() {
+      KnifeEngine.update();
+      KnifeEngine.render();
+      if (AppState.activeGame === 'knife') requestAnimationFrame(knifeLoop);
+    }
+
+    knifeCanvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      KnifeEngine.throwKnife();
+    });
+
+    document.getElementById('btnStartKnife').addEventListener('click', () => {
+      AudioEngine.init();
+      resizeKnifeCanvas();
+      document.getElementById('knifeStartModal').classList.add('hidden');
+      KnifeEngine.reset();
+      knifeLoop();
+    });
+
+    document.getElementById('btnKnifeRevive').addEventListener('click', () => {
+      triggerOfficialMonetagAd((success) => {
+        if (success) {
+          document.getElementById('knifeOverModal').classList.remove('flex');
+          document.getElementById('knifeOverModal').classList.add('hidden');
+          KnifeEngine.active = true;
+          knifeLoop();
+          showToast('রিভাইভ সফল হয়েছে!', 'success');
+        }
+      });
+    });
+
+    document.getElementById('btnKnifeRestart').addEventListener('click', () => {
+      AppState.coins += KnifeEngine.totalScore;
+      updateBalances();
+      document.getElementById('knifeOverModal').classList.remove('flex');
+      document.getElementById('knifeOverModal').classList.add('hidden');
+      KnifeEngine.stage = 1;
+      KnifeEngine.totalScore = 0;
+      KnifeEngine.reset();
+      knifeLoop();
+    });
+
+    // ==========================================
+    // TAB SWITCHER (Arcade / Wallet / Tasks)
+    // ==========================================
+    const navBtnArcade = document.getElementById('navBtnArcade');
+    const navBtnWallet = document.getElementById('navBtnWallet');
+    const navBtnTasks = document.getElementById('navBtnTasks');
+
+    const tabWallet = document.getElementById('tabWallet');
+    const tabTasks = document.getElementById('tabTasks');
+
+    function switchTab(tab) {
+      backToLobby();
+      [viewLobby, tabWallet, tabTasks].forEach(t => t.classList.add('hidden'));
+      [navBtnArcade, navBtnWallet, navBtnTasks].forEach(b => {
+        b.classList.remove('text-amber-400');
+        b.classList.add('text-slate-400');
+      });
+
+      if (tab === 'arcade') {
+        viewLobby.classList.remove('hidden');
+        navBtnArcade.classList.add('text-amber-400');
+        navBtnArcade.classList.remove('text-slate-400');
+      } else if (tab === 'wallet') {
+        tabWallet.classList.remove('hidden');
+        navBtnWallet.classList.add('text-amber-400');
+        navBtnWallet.classList.remove('text-slate-400');
+        renderHistory();
+      } else if (tab === 'tasks') {
+        tabTasks.classList.remove('hidden');
+        navBtnTasks.classList.add('text-amber-400');
+        navBtnTasks.classList.remove('text-slate-400');
+        checkAndPreloadAd();
+      }
+    }
+
+    navBtnArcade.addEventListener('click', () => switchTab('arcade'));
+    navBtnWallet.addEventListener('click', () => switchTab('wallet'));
+    navBtnTasks.addEventListener('click', () => switchTab('tasks'));
+
+    // Sound toggle
+    document.getElementById('btnSoundToggle').addEventListener('click', () => {
+      AppState.soundEnabled = !AppState.soundEnabled;
+      localStorage.setItem('flappy_sound', AppState.soundEnabled);
+      const icon = document.getElementById('soundIcon');
+      if (AppState.soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-xs';
+        showToast('সাউন্ড চালু করা হয়েছে');
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-xs text-rose-400';
+        showToast('সাউন্ড মিউট করা হয়েছে');
       }
     });
 
-    document.getElementById('btnStartGame').addEventListener('click', () => {
-      AudioEngine.init();
-      resizeCanvas();
-      document.getElementById('startScreen').classList.add('hidden');
-      Game.reset();
-      Game.active = true;
-    });
-
-    // Revive Action with Monetag
-    document.getElementById('btnReviveAd').addEventListener('click', () => {
-      triggerOfficialMonetagAd((success) => {
-        if (success) {
-          AppState.reviveUsedInSession = true;
-          document.getElementById('gameOverModal').classList.remove('flex');
-          document.getElementById('gameOverModal').classList.add('hidden');
-          Game.bird.y = canvas.getBoundingClientRect().height / 2;
-          Game.bird.vy = 0;
-          Game.pipes = Game.pipes.filter(p => p.x > Game.bird.x + 120);
-          Game.active = true;
-          showToast('রিভাইভ সফল হয়েছে! খেলা আবার শুরু হলো।', 'success');
-        }
-      });
-    });
-
-    // 2X Multiplier with Monetag
-    document.getElementById('btnDoubleRewardAd').addEventListener('click', () => {
-      triggerOfficialMonetagAd((success) => {
-        if (success) {
-          Game.sessionCoins = Game.sessionCoins * 2;
-          document.getElementById('finalCoinsText').textContent = `+${Game.sessionCoins} (2X)`;
-          document.getElementById('btnDoubleRewardAd').classList.add('opacity-50', 'pointer-events-none');
-          showToast('অভিনন্দন! আপনার কয়েন দ্বিগুণ (2X) হয়েছে!', 'success');
-        }
-      });
-    });
-
-    // Claim and Restart
-    document.getElementById('btnCollectAndRestart').addEventListener('click', () => {
-      AppState.coins += Game.sessionCoins;
-      updateBalances();
-      document.getElementById('gameOverModal').classList.remove('flex');
-      document.getElementById('gameOverModal').classList.add('hidden');
-      Game.reset();
-      Game.active = true;
-      showToast(`${Game.sessionCoins} কয়েন ব্যালেন্সে যোগ হয়েছে!`, 'success');
-    });
-
-    // Direct Ad in Tasks Tab
+    // ==========================================
+    // DIRECT TASKS & BKASH PAYOUT
+    // ==========================================
     document.getElementById('btnDirectWatchAd').addEventListener('click', () => {
       triggerOfficialMonetagAd((success) => {
         if (success) {
@@ -878,7 +1653,6 @@
       });
     });
 
-    // Channel Join Simulator
     document.getElementById('btnJoinChannel').addEventListener('click', () => {
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.openTelegramLink('https://t.me/telegram');
@@ -894,7 +1668,6 @@
       }, 3000);
     });
 
-    // bKash Withdrawal Processing
     const withdrawForm = document.getElementById('withdrawForm');
     const payoutHistoryList = document.getElementById('payoutHistoryList');
 
@@ -903,7 +1676,6 @@
         payoutHistoryList.innerHTML = `<div class="text-center text-slate-500 py-3">এখনো কোনো উইথড্র রিকোয়েস্ট করেননি</div>`;
         return;
       }
-
       payoutHistoryList.innerHTML = AppState.withdrawHistory.map(item => `
         <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-700/60 flex items-center justify-between">
           <div>
@@ -927,12 +1699,10 @@
       const phone = document.getElementById('bkashNumber').value.trim();
       const amount = parseFloat(document.getElementById('withdrawAmount').value);
 
-      const bdPhoneRegex = /^01[3-9]\d{8}$/;
-      if (!bdPhoneRegex.test(phone)) {
+      if (!/^01[3-9]\d{8}$/.test(phone)) {
         showToast('সঠিক ১১ ডিজিটের bKash নম্বর দিন (যেমন: 01712345678)', 'error');
         return;
       }
-
       if (isNaN(amount) || amount < 50) {
         showToast('সর্বনিম্ন উইথড্রয়াল ৫০ টাকা!', 'error');
         return;
@@ -940,7 +1710,7 @@
 
       const requiredCoins = amount * 1000;
       if (AppState.coins < requiredCoins) {
-        showToast(`পর্যাপ্ত ব্যালেন্স নেই! প্রয়োজন ${requiredCoins.toLocaleString()} কয়েন।`, 'error');
+        showToast(`পর্যাপ্ত কয়েন নেই! প্রয়োজন ${requiredCoins.toLocaleString()} কয়েন।`, 'error');
         return;
       }
 
@@ -975,67 +1745,9 @@
       showToast(`৳${amount} উইথড্র রিকোয়েস্ট জমা হয়েছে!`, 'success');
     });
 
-    // Tab Switching
-    const navBtnGame = document.getElementById('navBtnGame');
-    const navBtnWallet = document.getElementById('navBtnWallet');
-    const navBtnTasks = document.getElementById('navBtnTasks');
-
-    const tabGame = document.getElementById('tabGame');
-    const tabWallet = document.getElementById('tabWallet');
-    const tabTasks = document.getElementById('tabTasks');
-
-    function switchTab(tab) {
-      [tabGame, tabWallet, tabTasks].forEach(t => t.classList.add('hidden'));
-      [navBtnGame, navBtnWallet, navBtnTasks].forEach(b => {
-        b.classList.remove('text-amber-400');
-        b.classList.add('text-slate-400');
-      });
-
-      if (tab === 'game') {
-        tabGame.classList.remove('hidden');
-        navBtnGame.classList.add('text-amber-400');
-        navBtnGame.classList.remove('text-slate-400');
-        resizeCanvas();
-      } else if (tab === 'wallet') {
-        tabWallet.classList.remove('hidden');
-        navBtnWallet.classList.add('text-amber-400');
-        navBtnWallet.classList.remove('text-slate-400');
-        renderHistory();
-      } else if (tab === 'tasks') {
-        tabTasks.classList.remove('hidden');
-        navBtnTasks.classList.add('text-amber-400');
-        navBtnTasks.classList.remove('text-slate-400');
-        checkAndPreloadAd();
-      }
-    }
-
-    navBtnGame.addEventListener('click', () => switchTab('game'));
-    navBtnWallet.addEventListener('click', () => switchTab('wallet'));
-    navBtnTasks.addEventListener('click', () => switchTab('tasks'));
-
-    // Sound toggle
-    const btnSound = document.getElementById('btnSoundToggle');
-    const soundIcon = document.getElementById('soundIcon');
-    btnSound.addEventListener('click', () => {
-      AppState.soundEnabled = !AppState.soundEnabled;
-      localStorage.setItem('flappy_sound', AppState.soundEnabled);
-      if (AppState.soundEnabled) {
-        soundIcon.className = 'fa-solid fa-volume-high text-xs';
-        showToast('সাউন্ড চালু করা হয়েছে');
-      } else {
-        soundIcon.className = 'fa-solid fa-volume-xmark text-xs text-rose-400';
-        showToast('সাউন্ড মিউট করা হয়েছে');
-      }
-    });
-
-    // Start Everything
     window.onload = function() {
-      resizeCanvas();
       updateBalances();
       renderHistory();
-      requestAnimationFrame(gameLoop);
-
-      // Preload Monetag Ad after 1 second
       setTimeout(checkAndPreloadAd, 1200);
     };
   </script>
